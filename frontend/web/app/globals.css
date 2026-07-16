@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0c0a09;
+  --color-surface: #1c1917;
+  --color-surface-2: #292524;
+  --color-line: #332e2a;
+  --color-ink: #f5f0eb;
+  --color-ink-2: #a8a29e;
+  --color-ink-3: #78716c;
+  --color-accent: #e63946;
+  --color-accent-deep: #b32433;
+  --color-accent-soft: #3a1215;
+  --color-blue: #5b8def;
+  --color-blue-soft: #16233d;
+  --color-gold: #d9a44a;
+  --color-gold-soft: #33260f;
+  --color-green: #3fb27f;
+  --color-green-soft: #0f2b20;
+  --font-sans: var(--font-noto-sans-jp), "Hiragino Sans", "Noto Sans JP",
+    sans-serif;
+}
+
+html,
+body {
+  background: #050403;
+  color: var(--color-ink);
+}
+
+/* 発話中アバターのパルスリング */
+@keyframes speak-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(230, 57, 70, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(230, 57, 70, 0);
+  }
+}
+.speaking {
+  animation: speak-pulse 1.6s ease-out infinite;
+}
+
+@keyframes speak-pulse-blue {
+  0% {
+    box-shadow: 0 0 0 0 rgba(91, 141, 239, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(91, 141, 239, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(91, 141, 239, 0);
+  }
+}
+.speaking-blue {
+  animation: speak-pulse-blue 1.6s ease-out infinite;
+}
+
+/* リアクションの浮遊アニメーション */
+@keyframes float-up {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.8);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0) scale(1.15);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-56px) scale(1);
+  }
+}
+.reaction-float {
+  animation: float-up 1.4s ease-out forwards;
+}
