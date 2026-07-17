@@ -1,9 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { Noto_Sans_JP } from "next/font/google";
+import { Orbitron, Zen_Kaku_Gothic_New } from "next/font/google";
 import "./globals.css";
 
-const notoSansJP = Noto_Sans_JP({
-  variable: "--font-noto-sans-jp",
+const orbitron = Orbitron({
+  variable: "--font-orbitron",
+  subsets: ["latin"],
+  weight: ["500", "700", "900"],
+});
+
+const zenKaku = Zen_Kaku_Gothic_New({
+  variable: "--font-zen-kaku",
   subsets: ["latin"],
   weight: ["400", "500", "700", "900"],
 });
@@ -15,7 +21,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0c0a09",
+  themeColor: "#05070d",
 };
 
 export default function RootLayout({
@@ -24,9 +30,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja" className={`${notoSansJP.variable} h-full antialiased`}>
+    <html
+      lang="ja"
+      className={`${orbitron.variable} ${zenKaku.variable} h-full antialiased`}
+    >
       <body className="min-h-full">
-        <div className="relative mx-auto min-h-dvh w-full max-w-[430px] bg-bg sm:border-x sm:border-line">
+        <div className="bg-grid relative mx-auto min-h-dvh w-full max-w-[430px] bg-bg sm:border-x sm:border-line">
           {children}
         </div>
       </body>

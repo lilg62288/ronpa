@@ -13,7 +13,7 @@ const items = [
 export function BottomNav() {
   const pathname = usePathname();
   return (
-    <nav className="fixed bottom-0 left-1/2 z-20 w-full max-w-[430px] -translate-x-1/2 border-t border-line bg-surface/95 backdrop-blur">
+    <nav className="fixed bottom-0 left-1/2 z-20 w-full max-w-[430px] -translate-x-1/2 border-t border-line bg-surface/90 backdrop-blur">
       <div className="grid grid-cols-3">
         {items.map(({ href, label, Icon }) => {
           const active = pathname.startsWith(href);
@@ -21,11 +21,14 @@ export function BottomNav() {
             <Link
               key={href}
               href={href}
-              className={`flex flex-col items-center gap-1 py-2.5 text-[10px] font-bold ${
-                active ? "text-accent" : "text-ink-3"
+              className={`relative flex flex-col items-center gap-1 py-2.5 text-[10px] font-bold ${
+                active ? "text-cyan" : "text-ink-3"
               }`}
             >
-              <Icon className="h-6 w-6" />
+              {active && (
+                <span className="glow-cyan absolute top-0 h-0.5 w-10 rounded-full bg-cyan" />
+              )}
+              <Icon className="h-5 w-5" />
               {label}
             </Link>
           );

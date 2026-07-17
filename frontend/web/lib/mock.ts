@@ -1,10 +1,11 @@
 export type Category = "就活" | "時事" | "ビジネス" | "学術";
 
+// GitHubのIssueラベル風（枠線＋薄い背景＋同系色テキスト）
 export const categoryColor: Record<Category, string> = {
-  就活: "bg-green-soft text-green",
-  時事: "bg-accent-soft text-accent",
-  ビジネス: "bg-blue-soft text-blue",
-  学術: "bg-gold-soft text-gold",
+  就活: "border-green/40 bg-green-soft text-green",
+  時事: "border-accent/40 bg-accent-soft text-accent",
+  ビジネス: "border-blue/40 bg-blue-soft text-blue",
+  学術: "border-purple/40 bg-purple-soft text-purple",
 };
 
 export type PublicRoom = {

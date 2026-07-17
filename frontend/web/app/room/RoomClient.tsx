@@ -48,7 +48,7 @@ function Avatar({
   return (
     <div className="flex flex-col items-center gap-1.5">
       <span
-        className={`flex h-14 w-14 items-center justify-center rounded-full border-2 bg-surface-2 text-lg font-black ${ring} ${
+        className={`flex h-14 w-14 items-center justify-center rounded-full border-2 bg-surface-2 text-lg font-bold ${ring} ${
           speaking ? (color === "blue" ? "speaking-blue" : "speaking") : ""
         }`}
       >
@@ -58,7 +58,7 @@ function Avatar({
         {player.you ? "あなた" : player.name}
       </span>
       {speaking && (
-        <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[9px] font-bold text-ink-2">
+        <span className="rounded-full border border-line bg-surface-2 px-2 py-0.5 text-[9px] font-bold text-ink-2">
           発話中
         </span>
       )}
@@ -125,37 +125,37 @@ export function RoomClient({ mode }: { mode: "ai" | "group" }) {
   return (
     <main className="flex h-dvh flex-col">
       {/* 上部: テーマ・タイマー・フェーズ */}
-      <header className="border-b border-line bg-surface px-5 pb-4 pt-4">
+      <header className="border-b border-line bg-surface/90 px-4 pb-4 pt-4">
         <div className="flex items-center justify-between">
           <Link
             href="/battle"
-            className="rounded-full border border-line p-2 text-ink-3"
+            className="border border-line p-2 text-ink-3 hover:border-cyan/40"
           >
             <XIcon className="h-4 w-4" />
           </Link>
-          <span className="rounded-md bg-accent-soft px-2 py-0.5 text-[10px] font-bold text-accent">
+          <span className="rounded-full border border-accent/40 bg-accent-soft px-2 py-0.5 text-[10px] font-bold text-accent">
             時事
           </span>
           <button
             onClick={skip}
-            className="flex items-center gap-1 rounded-full border border-line px-3 py-1.5 text-[10px] font-bold text-ink-3"
+            className="flex items-center gap-1 border border-line bg-surface-2 px-3 py-1.5 text-[10px] font-bold text-ink-2 hover:border-cyan/40"
           >
             <SkipIcon className="h-3 w-3" />
             スキップ
           </button>
         </div>
-        <p className="mt-3 text-center text-sm font-black leading-snug">
+        <p className="mt-3 text-center text-sm font-bold leading-snug">
           日本は救急車を有料化すべきか
         </p>
-        <p className="mt-2 text-center font-mono text-4xl font-black tabular-nums">
+        <p className="text-glow mt-2 text-center font-display text-4xl font-bold tabular-nums text-ink">
           {mm}:{ss}
         </p>
-        <p className="mt-1 text-center text-xs font-bold text-accent">
+        <p className="mt-1.5 text-center text-[11px] font-bold tracking-[0.2em] text-cyan">
           {phase.label}
         </p>
-        <div className="mt-2 h-1 overflow-hidden rounded-full bg-surface-2">
+        <div className="mt-2 h-1 overflow-hidden bg-surface-2">
           <div
-            className="h-full bg-accent transition-all duration-1000 ease-linear"
+            className="glow-cyan h-full bg-gradient-to-r from-cyan/60 to-cyan transition-all duration-1000 ease-linear"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -164,12 +164,10 @@ export function RoomClient({ mode }: { mode: "ai" | "group" }) {
           {steps.map((step, i) => (
             <span
               key={step}
-              className={`flex-1 rounded-md py-1 text-center text-[9px] font-bold ${
+              className={`flex-1 border py-1 text-center text-[9px] font-bold ${
                 i === phase.step
-                  ? "bg-accent text-white"
-                  : i < phase.step
-                    ? "bg-surface-2 text-ink-3 line-through"
-                    : "bg-surface-2 text-ink-3"
+                  ? "border-cyan/50 bg-cyan-soft text-cyan"
+                  : "border-transparent text-ink-3"
               }`}
             >
               {step}
@@ -179,19 +177,19 @@ export function RoomClient({ mode }: { mode: "ai" | "group" }) {
       </header>
 
       {/* 中央: チーム・アバター */}
-      <section className="flex flex-1 flex-col justify-center gap-6 overflow-y-auto px-5 py-6">
+      <section className="flex flex-1 flex-col justify-center gap-6 overflow-y-auto px-4 py-6">
         {phase.side === "team" && (
-          <div className="rounded-xl border border-gold/40 bg-gold-soft px-4 py-2.5 text-center text-[11px] font-bold text-gold">
+          <div className="border border-gold/40 bg-gold-soft px-4 py-2.5 text-center text-[11px] font-bold text-gold">
             作戦タイム中 — チーム内通話のみ可能です
           </div>
         )}
         {phase.side === "ai" && (
-          <div className="rounded-xl border border-line bg-surface px-4 py-2.5 text-center text-[11px] font-bold text-ink-2">
+          <div className="border border-cyan/30 bg-cyan-soft px-4 py-2.5 text-center text-[11px] font-bold text-cyan">
             AIが対戦ログを解析中…
           </div>
         )}
         <div>
-          <p className="mb-3 text-center text-[11px] font-black tracking-widest text-accent">
+          <p className="mb-3 text-center text-[11px] font-bold tracking-[0.3em] text-accent">
             肯定側
           </p>
           <div className="flex justify-center gap-6">
@@ -205,7 +203,7 @@ export function RoomClient({ mode }: { mode: "ai" | "group" }) {
             ))}
           </div>
         </div>
-        <p className="text-center text-xs font-black tracking-[0.3em] text-ink-3">
+        <p className="font-display text-center text-sm font-bold tracking-[0.4em] text-ink-3">
           VS
         </p>
         <div>
@@ -219,14 +217,14 @@ export function RoomClient({ mode }: { mode: "ai" | "group" }) {
               />
             ))}
           </div>
-          <p className="mt-3 text-center text-[11px] font-black tracking-widest text-blue">
+          <p className="mt-3 text-center text-[11px] font-bold tracking-[0.3em] text-blue">
             否定側
           </p>
         </div>
         {mode === "group" && (
           <div className="flex items-center justify-center gap-2">
             <span className="text-[10px] font-bold text-ink-3">ジャッジ:</span>
-            <span className="flex h-7 w-7 items-center justify-center rounded-full border border-gold bg-surface-2 text-[10px] font-black">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full border border-gold bg-surface-2 text-[10px] font-bold">
               ア
             </span>
             <span className="text-[10px] text-ink-2">アオイ</span>
@@ -235,7 +233,7 @@ export function RoomClient({ mode }: { mode: "ai" | "group" }) {
         {isLast && (
           <button
             onClick={() => router.push("/result")}
-            className="mx-auto rounded-2xl bg-accent px-8 py-3.5 text-sm font-black text-white shadow-lg shadow-accent/25"
+            className="clip-corner glow-cyan mx-auto bg-cyan px-6 py-2.5 text-sm font-bold text-[#02131a] hover:bg-primary-hover"
           >
             採点結果を見る
           </button>
@@ -243,7 +241,7 @@ export function RoomClient({ mode }: { mode: "ai" | "group" }) {
       </section>
 
       {/* 下部: マイク・メモ・リアクション */}
-      <footer className="relative border-t border-line bg-surface px-5 pb-6 pt-3">
+      <footer className="relative border-t border-line bg-surface/90 px-4 pb-6 pt-3">
         {/* リアクションの浮遊表示 */}
         <div className="pointer-events-none absolute -top-14 right-8">
           {floats.map(({ id, emoji }) => (
@@ -260,7 +258,7 @@ export function RoomClient({ mode }: { mode: "ai" | "group" }) {
             <button
               key={emoji}
               onClick={() => react(emoji)}
-              className="rounded-full bg-surface-2 px-3.5 py-1.5 text-base active:scale-110"
+              className="rounded-full border border-line bg-surface-2 px-3 py-1 text-base hover:border-cyan/40 active:scale-110"
             >
               {emoji}
             </button>
@@ -271,7 +269,7 @@ export function RoomClient({ mode }: { mode: "ai" | "group" }) {
             onClick={() => setMemoOpen(true)}
             className="flex flex-col items-center gap-1 text-ink-2"
           >
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2">
+            <span className="flex h-11 w-11 items-center justify-center rounded-full border border-line bg-surface-2 hover:border-cyan/40">
               <NoteIcon className="h-5 w-5" />
             </span>
             <span className="text-[9px] font-bold">メモ</span>
@@ -281,20 +279,20 @@ export function RoomClient({ mode }: { mode: "ai" | "group" }) {
             className="flex flex-col items-center gap-1"
           >
             <span
-              className={`flex h-16 w-16 items-center justify-center rounded-full ${
+              className={`flex h-14 w-14 items-center justify-center rounded-full ${
                 micOn
-                  ? "bg-accent text-white shadow-lg shadow-accent/30"
-                  : "bg-surface-2 text-ink-3"
+                  ? "glow-cyan bg-cyan text-[#02131a]"
+                  : "border border-line bg-surface-2 text-ink-3"
               }`}
             >
               {micOn ? (
-                <MicIcon className="h-7 w-7" />
+                <MicIcon className="h-6 w-6" />
               ) : (
-                <MicOffIcon className="h-7 w-7" />
+                <MicOffIcon className="h-6 w-6" />
               )}
             </span>
             <span
-              className={`text-[9px] font-bold ${micOn ? "text-accent" : "text-ink-3"}`}
+              className={`text-[9px] font-bold ${micOn ? "text-cyan" : "text-ink-3"}`}
             >
               {micOn ? "マイクON" : "ミュート中"}
             </span>
@@ -303,7 +301,7 @@ export function RoomClient({ mode }: { mode: "ai" | "group" }) {
             href="/home"
             className="flex flex-col items-center gap-1 text-ink-2"
           >
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2">
+            <span className="flex h-11 w-11 items-center justify-center rounded-full border border-line bg-surface-2 hover:border-accent/60">
               <XIcon className="h-5 w-5" />
             </span>
             <span className="text-[9px] font-bold">退出</span>
@@ -314,24 +312,29 @@ export function RoomClient({ mode }: { mode: "ai" | "group" }) {
       {/* メモシート */}
       {memoOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/60"
+          className="fixed inset-0 z-30 bg-black/70"
           onClick={() => setMemoOpen(false)}
         >
           <div
-            className="absolute bottom-0 left-1/2 w-full max-w-[430px] -translate-x-1/2 rounded-t-3xl border-t border-line bg-surface p-5 pb-8"
+            className="absolute bottom-0 left-1/2 w-full max-w-[430px] -translate-x-1/2 border-t border-cyan/30 bg-surface p-4 pb-8"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mx-auto h-1 w-10 rounded-full bg-surface-2" />
-            <p className="mt-4 text-sm font-black">メモ</p>
+            <p className="mt-4 flex items-baseline gap-2 text-sm font-bold">
+              メモ
+              <span className="text-[8px] font-medium tracking-[0.3em] text-ink-3">
+                TACTICAL NOTE
+              </span>
+            </p>
             <textarea
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
               placeholder="相手の主張の弱点、反駁の要点などをメモ…"
-              className="mt-3 h-40 w-full resize-none rounded-xl border border-line bg-bg p-3 text-sm text-ink placeholder:text-ink-3 focus:border-accent focus:outline-none"
+              className="mt-3 h-40 w-full resize-none border border-line bg-bg p-3 text-sm text-ink placeholder:text-ink-3 focus:border-cyan/60 focus:outline-none"
             />
             <button
               onClick={() => setMemoOpen(false)}
-              className="mt-3 w-full rounded-xl bg-surface-2 py-3 text-sm font-bold text-ink"
+              className="clip-corner mt-3 w-full border border-line bg-surface-2 py-2.5 text-sm font-bold text-ink hover:border-cyan/40"
             >
               閉じる
             </button>

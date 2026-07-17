@@ -1,42 +1,88 @@
 @import "tailwindcss";
 
+/* 近未来HUD風パレット（ネイビー×ネオンシアン） */
 @theme {
-  --color-bg: #0c0a09;
-  --color-surface: #1c1917;
-  --color-surface-2: #292524;
-  --color-line: #332e2a;
-  --color-ink: #f5f0eb;
-  --color-ink-2: #a8a29e;
-  --color-ink-3: #78716c;
-  --color-accent: #e63946;
-  --color-accent-deep: #b32433;
-  --color-accent-soft: #3a1215;
-  --color-blue: #5b8def;
-  --color-blue-soft: #16233d;
-  --color-gold: #d9a44a;
-  --color-gold-soft: #33260f;
-  --color-green: #3fb27f;
-  --color-green-soft: #0f2b20;
-  --font-sans: var(--font-noto-sans-jp), "Hiragino Sans", "Noto Sans JP",
+  --color-bg: #05070d;
+  --color-surface: #0b1120;
+  --color-surface-2: #141d33;
+  --color-line: #1f2b4a;
+  --color-ink: #e4ebfa;
+  --color-ink-2: #93a4c8;
+  --color-ink-3: #5a6a8f;
+  --color-cyan: #00e5ff;
+  --color-cyan-soft: #00e5ff14;
+  --color-accent: #ff4d6d;
+  --color-accent-deep: #e63956;
+  --color-accent-soft: #ff4d6d1a;
+  --color-blue: #3d8bff;
+  --color-blue-soft: #3d8bff1a;
+  --color-gold: #ffc94d;
+  --color-gold-soft: #ffc94d14;
+  --color-green: #2ee6a8;
+  --color-green-soft: #2ee6a814;
+  --color-purple: #b388ff;
+  --color-purple-soft: #b388ff1a;
+  --color-primary: #00e5ff;
+  --color-primary-hover: #66eeff;
+  --font-sans: var(--font-zen-kaku), "Hiragino Sans", "Noto Sans JP",
     sans-serif;
+  --font-display: var(--font-orbitron), var(--font-zen-kaku), sans-serif;
 }
 
 html,
 body {
-  background: #050403;
+  background: #020308;
   color: var(--color-ink);
+}
+
+/* HUDグリッド＋上部のシアン光彩 */
+.bg-grid {
+  background-image:
+    radial-gradient(
+      720px 360px at 50% -80px,
+      rgba(0, 229, 255, 0.08),
+      transparent 70%
+    ),
+    linear-gradient(rgba(120, 160, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 160, 255, 0.035) 1px, transparent 1px);
+  background-size:
+    auto,
+    28px 28px,
+    28px 28px;
+}
+
+/* ネオン発光 */
+.glow-cyan {
+  box-shadow:
+    0 0 24px rgba(0, 229, 255, 0.28),
+    0 0 3px rgba(0, 229, 255, 0.5);
+}
+.text-glow {
+  text-shadow: 0 0 14px rgba(0, 229, 255, 0.45);
+}
+
+/* SF風コーナーカット */
+.clip-corner {
+  clip-path: polygon(
+    10px 0,
+    100% 0,
+    100% calc(100% - 10px),
+    calc(100% - 10px) 100%,
+    0 100%,
+    0 10px
+  );
 }
 
 /* 発話中アバターのパルスリング */
 @keyframes speak-pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.55);
+    box-shadow: 0 0 0 0 rgba(255, 77, 109, 0.5);
   }
   70% {
-    box-shadow: 0 0 0 12px rgba(230, 57, 70, 0);
+    box-shadow: 0 0 0 12px rgba(255, 77, 109, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(230, 57, 70, 0);
+    box-shadow: 0 0 0 0 rgba(255, 77, 109, 0);
   }
 }
 .speaking {
@@ -45,13 +91,13 @@ body {
 
 @keyframes speak-pulse-blue {
   0% {
-    box-shadow: 0 0 0 0 rgba(91, 141, 239, 0.55);
+    box-shadow: 0 0 0 0 rgba(61, 139, 255, 0.5);
   }
   70% {
-    box-shadow: 0 0 0 12px rgba(91, 141, 239, 0);
+    box-shadow: 0 0 0 12px rgba(61, 139, 255, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(91, 141, 239, 0);
+    box-shadow: 0 0 0 0 rgba(61, 139, 255, 0);
   }
 }
 .speaking-blue {

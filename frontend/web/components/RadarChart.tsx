@@ -53,9 +53,9 @@ export function RadarChart({ axes }: { axes: Axis[] }) {
       })}
       <polygon
         points={valuePoints}
-        fill="var(--color-accent)"
-        fillOpacity={0.22}
-        stroke="var(--color-accent)"
+        fill="var(--color-cyan)"
+        fillOpacity={0.18}
+        stroke="var(--color-cyan)"
         strokeWidth={2}
         strokeLinejoin="round"
       />
@@ -67,7 +67,7 @@ export function RadarChart({ axes }: { axes: Axis[] }) {
             cx={x}
             cy={y}
             r={4}
-            fill="var(--color-accent)"
+            fill="var(--color-cyan)"
             stroke="var(--color-bg)"
             strokeWidth={2}
           />
@@ -77,10 +77,10 @@ export function RadarChart({ axes }: { axes: Axis[] }) {
         const [lx, ly, vy, anchor] = labelPos[i];
         return (
           <g key={a.label} textAnchor={anchor}>
-            <text x={lx} y={ly} className="fill-ink-2 text-[11px] font-bold">
+            <text x={lx} y={ly} className="fill-ink-2 text-[11px] font-semibold">
               {a.label}
             </text>
-            <text x={lx} y={vy} className="fill-ink text-[14px] font-black">
+            <text x={lx} y={vy} className="fill-ink text-[14px] font-bold">
               {a.score}
             </text>
           </g>

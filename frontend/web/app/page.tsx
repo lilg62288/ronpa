@@ -1,19 +1,22 @@
 import Link from "next/link";
-import { HankoMark, Wordmark } from "@/components/Logo";
+import { LogoMark, Wordmark } from "@/components/Logo";
 
 export default function SplashPage() {
   return (
     <main className="flex min-h-dvh flex-col justify-between px-8 py-12">
-      <div />
+      <p className="text-center text-[9px] tracking-[0.4em] text-ink-3">
+        SYSTEM ONLINE
+      </p>
       <div className="flex flex-col items-center text-center">
-        <HankoMark size="lg" />
-        <div className="mt-6">
-          <Wordmark className="text-5xl" />
+        <LogoMark size="lg" />
+        <div className="mt-7">
+          <Wordmark className="text-4xl" />
         </div>
-        <p className="mt-3 text-[10px] font-medium tracking-[0.18em] text-ink-3">
+        <p className="mt-4 text-[9px] font-medium tracking-[0.3em] text-cyan/70">
           REALTIME ONLINE NEGOTIATION & PRACTICE ARENA
         </p>
-        <p className="mt-8 text-sm font-bold leading-relaxed text-ink-2">
+        <div className="mt-8 h-px w-24 bg-gradient-to-r from-transparent via-cyan/50 to-transparent" />
+        <p className="mt-8 text-sm leading-relaxed text-ink-2">
           日本初、リアルタイム対人ディベート × AI採点
           <br />
           論理的思考力と説得力を「実践」で鍛える道場
@@ -22,20 +25,20 @@ export default function SplashPage() {
       <div className="flex flex-col gap-3">
         <Link
           href="/home"
-          className="rounded-2xl bg-accent py-4 text-center text-base font-bold text-white shadow-lg shadow-accent/25 active:bg-accent-deep"
+          className="clip-corner glow-cyan bg-cyan py-3.5 text-center text-sm font-bold tracking-widest text-[#02131a] hover:bg-primary-hover"
         >
           新規登録で始める
         </Link>
         <Link
           href="/home"
-          className="rounded-2xl border border-line bg-surface py-4 text-center text-base font-bold text-ink active:bg-surface-2"
+          className="clip-corner border border-cyan/30 bg-cyan-soft py-3.5 text-center text-sm font-bold tracking-widest text-cyan hover:border-cyan/60"
         >
           ログイン
         </Link>
         <p className="mt-2 text-center text-[10px] leading-relaxed text-ink-3">
           登録すると
-          <span className="underline">利用規約</span>と
-          <span className="underline">プライバシーポリシー</span>
+          <span className="text-cyan/80">利用規約</span>と
+          <span className="text-cyan/80">プライバシーポリシー</span>
           に同意したものとみなされます
         </p>
       </div>
