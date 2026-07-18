@@ -1,0 +1,17 @@
+# Render Blueprint — バックエンドAPI
+# https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: ronpa-api
+    runtime: python
+    rootDir: backend
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: OPENAI_API_KEY
+        sync: false # ダッシュボードで設定（リポジトリに含めない）
+      - key: FRONTEND_ORIGINS
+        sync: false # 例: https://ronpa.vercel.app
