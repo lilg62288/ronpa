@@ -2,20 +2,22 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useLang } from "@/lib/i18n";
 import { HomeIcon, SwordsIcon, UserIcon } from "./icons";
 
 const items = [
-  { href: "/home", label: "ホーム", Icon: HomeIcon },
-  { href: "/battle", label: "対戦", Icon: SwordsIcon },
-  { href: "/mypage", label: "マイページ", Icon: UserIcon },
+  { href: "/home", key: "home" as const, Icon: HomeIcon },
+  { href: "/battle", key: "battle" as const, Icon: SwordsIcon },
+  { href: "/mypage", key: "mypage" as const, Icon: UserIcon },
 ];
 
 export function BottomNav() {
   const pathname = usePathname();
+  const { t } = useLang();
   return (
     <nav className="fixed bottom-0 left-1/2 z-20 w-full max-w-[430px] -translate-x-1/2 border-t border-line bg-surface/90 backdrop-blur">
       <div className="grid grid-cols-3">
-        {items.map(({ href, label, Icon }) => {
+        {items.map(({ href, key, Icon }) => {
           const active = pathname.startsWith(href);
           return (
             <Link
@@ -29,7 +31,7 @@ export function BottomNav() {
                 <span className="glow-cyan absolute top-0 h-0.5 w-10 rounded-full bg-cyan" />
               )}
               <Icon className="h-5 w-5" />
-              {label}
+              {t.nav[key]}
             </Link>
           );
         })}

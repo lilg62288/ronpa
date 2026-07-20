@@ -46,6 +46,30 @@ THEME_BANK: dict[str, list[str]] = {
     ],
 }
 
+# 英語モード用テーマバンク
+THEME_BANK_EN: dict[str, list[str]] = {
+    "Careers": [
+        "Should companies abolish simultaneous mass hiring of new graduates?",
+        "Should AI-based interviews be expanded in recruiting?",
+        "Should university grades matter more in hiring decisions?",
+    ],
+    "Current Affairs": [
+        "Should ambulance services charge a fee?",
+        "Should single-use plastic bag fees be continued?",
+        "Should online voting be introduced in national elections?",
+    ],
+    "Business": [
+        "Should remote work become the standard?",
+        "Should side jobs be fully liberalized?",
+        "Should companies adopt a four-day workweek?",
+    ],
+    "Academia": [
+        "Should AI-generated works be granted copyright?",
+        "Should programming education be mandatory from elementary school?",
+        "Should animal testing be banned in principle?",
+    ],
+}
+
 # 難易度レベル定義
 LEVELS: dict[str, dict] = {
     "easy": {
@@ -58,6 +82,13 @@ LEVELS: dict[str, dict] = {
         ),
         "temperature": 0.9,
         "opening": "私が相手です。肩の力を抜いて、まずはあなたの意見を聞かせてください。",
+        "style_en": (
+            "You are a gentle practice partner for beginners. "
+            "Rebut one point at a time, in plain language, within 2-3 sentences. "
+            "Occasionally make deliberately weak arguments to leave openings for the opponent. "
+            "Briefly acknowledge what the opponent did well to keep the discussion welcoming."
+        ),
+        "opening_en": "I'm your practice partner. Relax, and tell me your opinion first.",
     },
     "normal": {
         "label": "普通",
@@ -68,6 +99,12 @@ LEVELS: dict[str, dict] = {
         ),
         "temperature": 0.8,
         "opening": "私が対戦相手です。まずはあなたの立論をどうぞ。根拠を添えて主張してください。",
+        "style_en": (
+            "You are a debater of average competitive skill. "
+            "Rebut logically with data and facts, and point out 1-2 specific weaknesses "
+            "in the opponent's argument (lack of evidence, shifting the point, contradictions)."
+        ),
+        "opening_en": "I'm your opponent. Please present your opening argument with supporting evidence.",
     },
     "hard": {
         "label": "難しい",
@@ -79,6 +116,13 @@ LEVELS: dict[str, dict] = {
         ),
         "temperature": 0.7,
         "opening": "始めましょう。立論をどうぞ。曖昧な根拠は全て突かせてもらいます。",
+        "style_en": (
+            "You are a sharp national-tournament-level debater. "
+            "Actively cite statistics, cases, and expert knowledge, and relentlessly attack "
+            "logical leaps, missing evidence, and vague definitions across multiple points. "
+            "Anticipate the opponent's rebuttals and preempt them."
+        ),
+        "opening_en": "Let's begin. Present your argument — I will challenge every vague claim you make.",
     },
     "oni": {
         "label": "鬼",
@@ -90,6 +134,15 @@ LEVELS: dict[str, dict] = {
         ),
         "temperature": 0.6,
         "opening": "……始めますか。あなたの立論の一言一句、全てが採点対象だと思ってください。どうぞ。",
+        "style_en": (
+            "You are an undefeated debate champion. With cold, flawless logic, enumerate and "
+            "dismantle every hole in the opponent's claims (false premises, missing evidence, "
+            "logical leaps, vague definitions, hidden value judgments). "
+            "Preempt and crush anticipated counterarguments, and corner the opponent with "
+            "hard-to-answer questions. Never compromise — but never attack the person; "
+            "overwhelm with logic alone."
+        ),
+        "opening_en": "...Shall we begin? Every single word of your argument will be scrutinized. Go ahead.",
     },
 }
 
@@ -106,10 +159,13 @@ def start_debate(
     theme: Optional[str] = None,
     user_side: str = "肯定",
     level: str = DEFAULT_LEVEL,
+    language: str = "ja",
 ) -> dict:
+    language = "en" if language == "en" else "ja"
     if not theme:
-        cat = category if category in THEME_BANK else random.choice(list(THEME_BANK))
-        theme = random.choice(THEME_BANK[cat])
+        bank = THEME_BANK_EN if language == "en" else THEME_BANK
+        cat = category if category in bank else random.choice(list(bank))
+        theme = random.choice(bank[cat])
         category = cat
     user_side = "肯定" if user_side != "否定" else "否定"
     ai_side = "否定" if user_side == "肯定" else "肯定"
@@ -123,6 +179,7 @@ def start_debate(
         "user_side": user_side,
         "ai_side": ai_side,
         "level": level,
+        "language": language,
         "messages": [],  # [{"role": "user"|"ai", "content": str}]
     }
     _sessions[debate_id] = session
@@ -131,7 +188,12 @@ def start_debate(
     if ai_side == "肯定":
         argument = _first_argument(session)
         session["messages"].append({"role": "ai", "content": argument})
-        opening = f"私は肯定側を担当します。先攻として立論します。\n\n{argument}"
+        if language == "en":
+            opening = f"I will argue the Pro side. As the first speaker, here is my opening argument.\n\n{argument}"
+        else:
+            opening = f"私は肯定側を担当します。先攻として立論します。\n\n{argument}"
+    elif language == "en":
+        opening = f"I will argue the Con side. {LEVELS[level]['opening_en']}"
     else:
         opening = f"私は{ai_side}側を担当します。{LEVELS[level]['opening']}"
 
@@ -143,6 +205,7 @@ def start_debate(
         "ai_side": ai_side,
         "level": level,
         "level_label": LEVELS[level]["label"],
+        "language": language,
         "opening": opening,
     }
 
@@ -150,20 +213,29 @@ def start_debate(
 def _first_argument(s: dict) -> str:
     """AIが先攻（肯定側）の場合の立論を生成する"""
     level = LEVELS.get(s.get("level", DEFAULT_LEVEL), LEVELS[DEFAULT_LEVEL])
+    en = s.get("language") == "en"
     if MOCK_MODE:
+        if en:
+            return (
+                f"(Mock argument) I affirm: \"{s['theme']}\". "
+                "Three reasons: first, the social benefit is significant; second, it is cost-effective; "
+                "third, it aligns with global trends. Your rebuttal, please."
+            )
         return (
             f"（モック立論）「{s['theme']}」に肯定側として賛成します。"
             "理由は3点。第一に社会的便益が大きいこと、第二に費用対効果が高いこと、"
             "第三に国際的な潮流に合致することです。反論をどうぞ。"
         )
+    trigger = (
+        "(Moderator) The debate begins. As the Pro side, please present your opening argument."
+        if en
+        else "（進行係）ディベートを開始します。肯定側のあなたから立論をどうぞ。"
+    )
     completion = _client.chat.completions.create(
         model=MODEL,
         messages=[
             {"role": "system", "content": _opponent_system_prompt(s)},
-            {
-                "role": "user",
-                "content": "（進行係）ディベートを開始します。肯定側のあなたから立論をどうぞ。",
-            },
+            {"role": "user", "content": trigger},
         ],
         max_tokens=400,
         temperature=level["temperature"],
@@ -177,6 +249,19 @@ def get_session(debate_id: str) -> Optional[dict]:
 
 def _opponent_system_prompt(s: dict) -> str:
     level = LEVELS.get(s.get("level", DEFAULT_LEVEL), LEVELS[DEFAULT_LEVEL])
+    if s.get("language") == "en":
+        ai_side = "Pro" if s["ai_side"] == "肯定" else "Con"
+        user_side = "Pro" if s["user_side"] == "肯定" else "Con"
+        return (
+            "You are an English-debate opponent.\n"
+            f"Topic: {s['theme']}\n"
+            f"You argue the {ai_side} side; your opponent (the user) argues the {user_side} side.\n"
+            f"Debating style: {level['style_en']}\n"
+            "Common rules:\n"
+            "- Keep each reply within about 120 English words\n"
+            "- Never abandon your assigned position\n"
+            "- No personal attacks"
+        )
     return (
         "あなたは日本語ディベートの対戦相手です。\n"
         f"テーマ: {s['theme']}\n"
@@ -191,8 +276,14 @@ def _opponent_system_prompt(s: dict) -> str:
 
 def reply_to(debate_id: str, message: str) -> dict:
     s = _sessions[debate_id]
+    en = s.get("language") == "en"
     if len(s["messages"]) >= MAX_TURNS:
-        return {"reply": "議論は十分に尽くされました。採点に進みましょう。", "ended": True}
+        ended_msg = (
+            "We have argued enough. Let's move on to the judging."
+            if en
+            else "議論は十分に尽くされました。採点に進みましょう。"
+        )
+        return {"reply": ended_msg, "ended": True}
 
     s["messages"].append({"role": "user", "content": message})
 
@@ -204,7 +295,14 @@ def reply_to(debate_id: str, message: str) -> dict:
             "hard": "（モック・難しい）その論には3つの飛躍があります。第一に定義が曖昧、第二に因果と相関の混同、第三に反例の無視です。順に反証します。",
             "oni": "（モック・鬼）前提から誤っています。あなたの主張は根拠・論理・定義の全てに穴があります。まず、その統計の出典と調査年を即答できますか？",
         }
-        reply = mock_by_level[s.get("level", DEFAULT_LEVEL)]
+        mock_by_level_en = {
+            "easy": "(Mock/Easy) That's an interesting point! But what about the cost side? Tell me more.",
+            "normal": f"(Mock/Normal) Your claim lacks evidence. Regarding \"{s['theme']}\", I rebut from a cost-effectiveness standpoint. Can you show concrete data?",
+            "hard": "(Mock/Hard) Your argument makes three leaps: vague definitions, confusing correlation with causation, and ignoring counterexamples. I will refute each in turn.",
+            "oni": "(Mock/Oni) Your premise itself is flawed. Every part of your claim — evidence, logic, definitions — has holes. First: can you instantly cite the source and year of that statistic?",
+        }
+        table = mock_by_level_en if en else mock_by_level
+        reply = table[s.get("level", DEFAULT_LEVEL)]
     else:
         history = [
             {"role": "assistant" if m["role"] == "ai" else "user", "content": m["content"]}
@@ -242,29 +340,74 @@ _JUDGE_PROMPT = """あなたはプロのディベート審査員です。
 {log}"""
 
 
+_JUDGE_PROMPT_EN = """You are a professional debate judge.
+
+Topic: {theme}
+The user argues the {user_side} side; the AI argues the {ai_side} side.
+
+Read the debate log below and, judging **only the user's ({user_side} side) statements**, score each of these four criteria as an integer out of 10.
+- logic: consistency of claims, grounding in data/facts, sound logical structure
+- persuasion: clarity of expression, rhetorical effectiveness, word choice
+- rebuttal: precisely attacking the opponent's weaknesses, answering head-on without dodging
+- structure: intro-body-conclusion organization, appropriate allocation of speech
+
+Then give concrete, brutally honest feedback on strengths and areas to improve, an overall comment, and a win/loss verdict.
+Write all feedback in English.
+
+Respond ONLY in this JSON format:
+{{"scores": {{"logic": 0, "persuasion": 0, "rebuttal": 0, "structure": 0}}, "good": "strengths", "improve": "areas to improve", "summary": "overall comment", "winner": "user or ai"}}
+
+Debate log:
+{log}"""
+
+
 def score_debate(debate_id: str) -> dict:
     s = _sessions[debate_id]
+    en = s.get("language") == "en"
 
     if MOCK_MODE:
-        result = {
-            "scores": {"logic": 7, "persuasion": 6, "rebuttal": 8, "structure": 7},
-            "good": "（モック採点）反論の切り返しが的確で、相手の論点に正面から答えられていた。",
-            "improve": "（モック採点）数値根拠が不足しており、主張の裏付けが弱い。結論の再提示も忘れずに。",
-            "summary": "（モック採点）堅実だが決定打に欠ける。根拠の厚みが今後の課題。",
-            "winner": "user",
-        }
+        if en:
+            result = {
+                "scores": {"logic": 7, "persuasion": 6, "rebuttal": 8, "structure": 7},
+                "good": "(Mock) Sharp counterarguments that answered the opponent's points head-on.",
+                "improve": "(Mock) Claims lack numerical evidence. Restate your conclusion at the end.",
+                "summary": "(Mock) Solid but missing a decisive blow. Strengthen your evidence base.",
+                "winner": "user",
+            }
+        else:
+            result = {
+                "scores": {"logic": 7, "persuasion": 6, "rebuttal": 8, "structure": 7},
+                "good": "（モック採点）反論の切り返しが的確で、相手の論点に正面から答えられていた。",
+                "improve": "（モック採点）数値根拠が不足しており、主張の裏付けが弱い。結論の再提示も忘れずに。",
+                "summary": "（モック採点）堅実だが決定打に欠ける。根拠の厚みが今後の課題。",
+                "winner": "user",
+            }
     else:
-        log = "\n".join(
-            f"[{s['user_side'] if m['role'] == 'user' else s['ai_side']}側"
-            f"{'・ユーザー' if m['role'] == 'user' else '・AI'}] {m['content']}"
-            for m in s["messages"]
-        )
-        prompt = _JUDGE_PROMPT.format(
-            theme=s["theme"],
-            user_side=s["user_side"],
-            ai_side=s["ai_side"],
-            log=log or "（発言なし）",
-        )
+        if en:
+            side_en = {"肯定": "Pro", "否定": "Con"}
+            log = "\n".join(
+                f"[{side_en[s['user_side']] if m['role'] == 'user' else side_en[s['ai_side']]}"
+                f"{' / User' if m['role'] == 'user' else ' / AI'}] {m['content']}"
+                for m in s["messages"]
+            )
+            prompt = _JUDGE_PROMPT_EN.format(
+                theme=s["theme"],
+                user_side=side_en[s["user_side"]],
+                ai_side=side_en[s["ai_side"]],
+                log=log or "(no statements)",
+            )
+        else:
+            log = "\n".join(
+                f"[{s['user_side'] if m['role'] == 'user' else s['ai_side']}側"
+                f"{'・ユーザー' if m['role'] == 'user' else '・AI'}] {m['content']}"
+                for m in s["messages"]
+            )
+            prompt = _JUDGE_PROMPT.format(
+                theme=s["theme"],
+                user_side=s["user_side"],
+                ai_side=s["ai_side"],
+                log=log or "（発言なし）",
+            )
         completion = _client.chat.completions.create(
             model=MODEL,
             messages=[{"role": "user", "content": prompt}],
@@ -285,6 +428,7 @@ def score_debate(debate_id: str) -> dict:
         "user_side": s["user_side"],
         "level": level,
         "level_label": LEVELS[level]["label"],
+        "language": s.get("language", "ja"),
         "scores": clamped,
         "total": sum(clamped.values()),
         "good": result.get("good", ""),

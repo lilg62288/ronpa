@@ -12,6 +12,7 @@ export type DebateStart = {
   ai_side: "肯定" | "否定";
   level: DebateLevel;
   level_label: string;
+  language: "ja" | "en";
   opening: string;
 };
 
@@ -25,6 +26,7 @@ export type DebateScore = {
   user_side: "肯定" | "否定";
   level?: DebateLevel;
   level_label?: string;
+  language?: "ja" | "en";
   scores: {
     logic: number;
     persuasion: number;
@@ -58,9 +60,15 @@ async function post<T>(path: string, body: unknown): Promise<T> {
 export function startDebate(
   level: DebateLevel = "normal",
   side: DebateSide = "肯定",
+  language: "ja" | "en" = "ja",
   category?: string,
 ): Promise<DebateStart> {
-  return post("/api/debate/start", { category, user_side: side, level });
+  return post("/api/debate/start", {
+    category,
+    user_side: side,
+    level,
+    language,
+  });
 }
 
 export function sendDebateMessage(

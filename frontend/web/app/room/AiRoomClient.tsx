@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { XIcon } from "@/components/icons";
+import { currentLang, useLang } from "@/lib/i18n";
 import {
   RESULT_STORAGE_KEY,
   scoreDebate,
@@ -16,50 +17,40 @@ import {
 
 type ChatMessage = { role: "user" | "ai"; content: string };
 
-const LEVELS: {
+const LEVEL_META: {
   key: DebateLevel;
   en: string;
-  label: string;
-  desc: string;
   cardClass: string;
   chipClass: string;
 }[] = [
   {
     key: "easy",
     en: "EASY",
-    label: "簡単",
-    desc: "肩慣らし。AIは優しく議論に付き合い、反論の余地を残してくれる。",
     cardClass: "border-green/40 hover:border-green",
     chipClass: "border-green/40 bg-green-soft text-green",
   },
   {
     key: "normal",
     en: "NORMAL",
-    label: "普通",
-    desc: "標準レベル。根拠のある反論が正面から返ってくる。",
     cardClass: "border-cyan/40 hover:border-cyan",
     chipClass: "border-cyan/40 bg-cyan-soft text-cyan",
   },
   {
     key: "hard",
     en: "HARD",
-    label: "難しい",
-    desc: "全国大会レベル。論理の飛躍や根拠の曖昧さを複数論点で執拗に突かれる。",
     cardClass: "border-gold/40 hover:border-gold",
     chipClass: "border-gold/40 bg-gold-soft text-gold",
   },
   {
     key: "oni",
     en: "ONI",
-    label: "鬼",
-    desc: "無敗の論破王。全ての穴を突かれ、再反論も先回りで潰される。覚悟せよ。",
     cardClass: "border-accent/40 hover:border-accent",
     chipClass: "border-accent/40 bg-accent-soft text-accent",
   },
 ];
 
 function isLevel(v: string | undefined): v is DebateLevel {
-  return !!v && LEVELS.some((l) => l.key === v);
+  return !!v && LEVEL_META.some((l) => l.key === v);
 }
 
 function initialSideOf(v: string | undefined): DebateSide | null {
@@ -77,6 +68,7 @@ export function AiRoomClient({
   initialSide?: string;
 }) {
   const router = useRouter();
+  const { t } = useLang();
   const [level, setLevel] = useState<DebateLevel | null>(
     isLevel(initialLevel) ? initialLevel : null,
   );
@@ -93,12 +85,13 @@ export function AiRoomClient({
   const [error, setError] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // レベル・立場が決まったら対戦開始
+  // レベル・立場が決まったら対戦開始（開始時の言語で固定。
+  // Providerのハイドレーションを待たずlocalStorageから直接読む）
   useEffect(() => {
     if (!level || !side) return;
     let cancelled = false;
     setError("");
-    startDebate(level, side)
+    startDebate(level, side, currentLang())
       .then((s) => {
         if (cancelled) return;
         setSession(s);
@@ -110,7 +103,10 @@ export function AiRoomClient({
     };
   }, [level, side]);
 
-  // ルーレット: 肯定/否定を高速で切り替えてから確定
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, thinking]);
+
   const spinRoulette = () => {
     if (spinning) return;
     setSpinning(true);
@@ -127,10 +123,6 @@ export function AiRoomClient({
     }, 90);
   };
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, thinking]);
-
   const send = async () => {
     const text = input.trim();
     if (!text || !session || thinking) return;
@@ -142,7 +134,7 @@ export function AiRoomClient({
       const res = await sendDebateMessage(session.debate_id, text);
       setMessages((m) => [...m, { role: "ai", content: res.reply }]);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "送信に失敗しました");
+      setError(e instanceof Error ? e.message : "Error");
     } finally {
       setThinking(false);
     }
@@ -157,13 +149,13 @@ export function AiRoomClient({
       sessionStorage.setItem(RESULT_STORAGE_KEY, JSON.stringify(result));
       router.push("/result");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "採点に失敗しました");
+      setError(e instanceof Error ? e.message : "Error");
       setScoring(false);
     }
   };
 
   const userTurns = messages.filter((m) => m.role === "user").length;
-  const levelMeta = LEVELS.find((l) => l.key === level);
+  const levelMeta = LEVEL_META.find((l) => l.key === level);
 
   // レベル選択画面
   if (!level) {
@@ -181,12 +173,14 @@ export function AiRoomClient({
           </p>
           <span className="w-8" />
         </div>
-        <h1 className="mt-6 text-center text-lg font-bold">相手のレベルを選択</h1>
+        <h1 className="mt-6 text-center text-lg font-bold">
+          {t.ai.levelSelect}
+        </h1>
         <p className="mt-1 text-center text-xs text-ink-3">
-          AIの議論スタイルが変わります
+          {t.ai.levelSelectSub}
         </p>
         <div className="mt-6 flex flex-col gap-3 pb-10">
-          {LEVELS.map(({ key, en, label, desc, cardClass, chipClass }) => (
+          {LEVEL_META.map(({ key, en, cardClass, chipClass }) => (
             <button
               key={key}
               onClick={() => setLevel(key)}
@@ -198,9 +192,11 @@ export function AiRoomClient({
                 >
                   {en}
                 </span>
-                <span className="text-base font-bold">{label}</span>
+                <span className="text-base font-bold">{t.levels[key]}</span>
               </div>
-              <p className="mt-2 text-xs leading-relaxed text-ink-2">{desc}</p>
+              <p className="mt-2 text-xs leading-relaxed text-ink-2">
+                {t.ai.levels[key]}
+              </p>
             </button>
           ))}
         </div>
@@ -225,9 +221,9 @@ export function AiRoomClient({
           </p>
           <span className="w-8" />
         </div>
-        <h1 className="mt-6 text-center text-lg font-bold">立場を選択</h1>
+        <h1 className="mt-6 text-center text-lg font-bold">{t.ai.sideSelect}</h1>
         <p className="mt-1 text-center text-xs text-ink-3">
-          肯定側が先攻で立論します。否定側を選ぶとAIが先に立論します
+          {t.ai.sideSelectSub}
         </p>
         <div className="mt-6 grid grid-cols-2 gap-3">
           <button
@@ -242,9 +238,9 @@ export function AiRoomClient({
             <p className="font-display text-[10px] tracking-[0.25em] text-accent">
               PRO
             </p>
-            <p className="mt-1.5 text-xl font-bold text-accent">肯定側</p>
+            <p className="mt-1.5 text-xl font-bold text-accent">{t.side.肯定}</p>
             <p className="mt-2 text-[11px] leading-relaxed text-ink-2">
-              先攻。あなたの立論から試合が始まる
+              {t.ai.proDesc}
             </p>
           </button>
           <button
@@ -257,9 +253,9 @@ export function AiRoomClient({
             <p className="font-display text-[10px] tracking-[0.25em] text-blue">
               CON
             </p>
-            <p className="mt-1.5 text-xl font-bold text-blue">否定側</p>
+            <p className="mt-1.5 text-xl font-bold text-blue">{t.side.否定}</p>
             <p className="mt-2 text-[11px] leading-relaxed text-ink-2">
-              後攻。AIの立論への反駁から入る
+              {t.ai.conDesc}
             </p>
           </button>
         </div>
@@ -268,12 +264,12 @@ export function AiRoomClient({
           onClick={spinRoulette}
           className="clip-corner mt-3 border border-gold/40 bg-gold-soft py-4 text-center text-sm font-bold text-gold hover:border-gold disabled:opacity-70"
         >
-          {spinning ? "運命が決めています…" : "🎲 ルーレットで決める"}
+          {spinning ? t.ai.spinning : t.ai.roulette}
         </button>
         <p className="mt-3 text-center text-[9px] tracking-widest text-ink-3">
           {spinning && spinFace
-            ? `>>> ${spinFace}側 <<<`
-            : "本番のグループ戦ではランダムに振り分けられます"}
+            ? `>>> ${t.side[spinFace]} <<<`
+            : t.ai.rouletteNote}
         </p>
       </main>
     );
@@ -298,28 +294,30 @@ export function AiRoomClient({
             disabled={scoring || userTurns === 0}
             className="clip-corner border border-gold/40 bg-gold-soft px-3 py-1.5 text-[10px] font-bold text-gold disabled:opacity-40"
           >
-            {scoring ? "採点中…" : "終了して採点"}
+            {scoring ? t.ai.judging : t.ai.finishBtn}
           </button>
         </div>
         <p className="mt-3 text-center text-sm font-bold leading-snug">
-          {session ? session.theme : "テーマを選定中…"}
+          {session ? session.theme : t.ai.selectingTheme}
         </p>
         <div className="mt-1.5 flex items-center justify-center gap-2 text-[10px] text-ink-3">
-          {levelMeta && (
+          {levelMeta && level && (
             <span
               className={`rounded-full border px-2 py-0.5 font-bold ${levelMeta.chipClass}`}
             >
-              {levelMeta.label}
+              {t.levels[level]}
             </span>
           )}
           {session && (
             <span>
-              あなた:{" "}
+              {t.ai.you}:{" "}
               <span className="font-bold text-accent">
-                {session.user_side}側
+                {t.side[session.user_side]}
               </span>
               {"　"}RONPA AI:{" "}
-              <span className="font-bold text-blue">{session.ai_side}側</span>
+              <span className="font-bold text-blue">
+                {t.side[session.ai_side]}
+              </span>
             </span>
           )}
         </div>
@@ -333,7 +331,7 @@ export function AiRoomClient({
               <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-blue bg-surface-2 text-[10px] font-bold">
                 AI
               </span>
-              <div className="max-w-[80%] border border-line bg-surface/90 px-3.5 py-2.5 text-[13px] leading-relaxed text-ink">
+              <div className="max-w-[80%] whitespace-pre-wrap border border-line bg-surface/90 px-3.5 py-2.5 text-[13px] leading-relaxed text-ink">
                 {m.content}
               </div>
             </div>
@@ -351,7 +349,7 @@ export function AiRoomClient({
               AI
             </span>
             <span className="animate-pulse text-xs text-ink-3">
-              反論を構築中…
+              {t.ai.thinking}
             </span>
           </div>
         )}
@@ -362,7 +360,7 @@ export function AiRoomClient({
         )}
         {scoring && (
           <p className="animate-pulse border border-cyan/30 bg-cyan-soft px-3.5 py-2.5 text-center text-xs font-bold text-cyan">
-            AIが対戦ログを4軸で解析中…
+            {t.ai.analyzing}
           </p>
         )}
         <div ref={bottomRef} />
@@ -381,9 +379,7 @@ export function AiRoomClient({
               }
             }}
             rows={2}
-            placeholder={
-              session ? "主張・反論を入力（Enterで送信）" : "接続中…"
-            }
+            placeholder={session ? t.ai.placeholder : t.ai.connecting}
             disabled={!session || scoring}
             className="min-h-[3rem] flex-1 resize-none border border-line bg-bg p-3 text-sm text-ink placeholder:text-ink-3 focus:border-cyan/60 focus:outline-none disabled:opacity-50"
           />
@@ -392,11 +388,11 @@ export function AiRoomClient({
             disabled={!session || thinking || !input.trim() || scoring}
             className="clip-corner glow-cyan h-12 shrink-0 bg-cyan px-5 text-sm font-bold text-[#02131a] hover:bg-primary-hover disabled:opacity-40 disabled:shadow-none"
           >
-            送信
+            {t.ai.send}
           </button>
         </div>
         <p className="mt-2 text-center text-[9px] tracking-widest text-ink-3">
-          発言 {userTurns} 回 — 3回以上の応酬で採点精度が上がります
+          {t.ai.turnsPre} {userTurns} {t.ai.turnsPost}
         </p>
       </footer>
     </main>

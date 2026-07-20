@@ -33,6 +33,7 @@ class StartRequest(BaseModel):
     theme: Optional[str] = None
     user_side: str = "肯定"
     level: str = "normal"  # easy | normal | hard | oni
+    language: str = "ja"  # ja | en
 
 
 class MessageRequest(BaseModel):
@@ -52,7 +53,9 @@ def health():
 @app.post("/api/debate/start")
 def start(req: StartRequest):
     try:
-        return debate.start_debate(req.category, req.theme, req.user_side, req.level)
+        return debate.start_debate(
+            req.category, req.theme, req.user_side, req.level, req.language
+        )
     except Exception as e:  # OpenAI障害・残高不足など
         raise HTTPException(status_code=502, detail=f"対戦の開始に失敗しました: {e}")
 

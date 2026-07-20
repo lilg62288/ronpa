@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   BotIcon,
@@ -5,50 +7,56 @@ import {
   SwordsIcon,
   UsersIcon,
 } from "@/components/icons";
-import { categoryColor, themeBank } from "@/lib/mock";
-
-const modes = [
-  {
-    href: "/room?mode=ai",
-    tag: "SOLO / 1人プレイ",
-    title: "AI道場",
-    desc: "GPT-4oベースのAIと1対1で対戦。テキスト／音声チャットでいつでも即スタート。",
-    Icon: BotIcon,
-    iconClass: "border-gold/40 bg-gold-soft text-gold",
-  },
-  {
-    href: "/room?mode=random",
-    tag: "RANKED / ランダムマッチ",
-    title: "オンライン対戦",
-    desc: "全国のユーザーとリアルタイム音声で対人戦。レーティングがかかる真剣勝負。",
-    Icon: SwordsIcon,
-    iconClass: "border-accent/40 bg-accent-soft text-accent",
-  },
-  {
-    href: "/room?mode=group",
-    tag: "CUSTOM / フレンド・グループ",
-    title: "ルーム作成",
-    desc: "最大8名のグループディベート。肯定・否定・ジャッジにチーム分けして開催。",
-    Icon: UsersIcon,
-    iconClass: "border-blue/40 bg-blue-soft text-blue",
-  },
-];
+import { LangToggle, useLang } from "@/lib/i18n";
 
 export default function BattlePage() {
+  const { t } = useLang();
+  const modes = [
+    {
+      href: "/room?mode=ai",
+      tag: t.battle.aiTag,
+      title: t.battle.aiTitle,
+      desc: t.battle.aiDesc,
+      Icon: BotIcon,
+      iconClass: "border-gold/40 bg-gold-soft text-gold",
+    },
+    {
+      href: "/room?mode=random",
+      tag: t.battle.randomTag,
+      title: t.battle.randomTitle,
+      desc: t.battle.randomDesc,
+      Icon: SwordsIcon,
+      iconClass: "border-accent/40 bg-accent-soft text-accent",
+    },
+    {
+      href: "/room?mode=group",
+      tag: t.battle.groupTag,
+      title: t.battle.groupTitle,
+      desc: t.battle.groupDesc,
+      Icon: UsersIcon,
+      iconClass: "border-blue/40 bg-blue-soft text-blue",
+    },
+  ];
+
   return (
     <main className="px-4 pt-6">
-      <h1 className="flex items-baseline gap-2 text-lg font-bold">
-        モード選択
-        <span className="text-[8px] font-medium tracking-[0.3em] text-ink-3">
-          SELECT MODE
-        </span>
-      </h1>
-      <p className="mt-1 text-xs text-ink-3">今日はどの流儀で鍛える？</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="flex items-baseline gap-2 text-lg font-bold">
+            {t.battle.title}
+            <span className="text-[8px] font-medium tracking-[0.3em] text-ink-3">
+              {t.battle.titleEn}
+            </span>
+          </h1>
+          <p className="mt-1 text-xs text-ink-3">{t.battle.subtitle}</p>
+        </div>
+        <LangToggle />
+      </div>
 
       <div className="mt-4 flex flex-col gap-3">
         {modes.map(({ href, tag, title, desc, Icon, iconClass }) => (
           <Link
-            key={title}
+            key={href}
             href={href}
             className="border border-line bg-surface/80 p-4 hover:border-cyan/40"
           >
@@ -78,25 +86,26 @@ export default function BattlePage() {
       {/* テーマバンク */}
       <section className="mt-7 pb-4">
         <h2 className="flex items-baseline gap-2 text-sm font-bold">
-          テーマバンク
+          {t.battle.themeBank}
           <span className="text-[8px] font-medium tracking-[0.3em] text-ink-3">
-            THEME BANK / 162
+            {t.battle.themeBankEn}
           </span>
         </h2>
         <div className="mt-3 grid grid-cols-2 gap-3">
-          {themeBank.map(({ category, count, sample }) => (
+          {t.data.themeBank.map(({ category, cls, count, sample }) => (
             <button
               key={category}
               className="border border-line bg-surface/80 p-3.5 text-left hover:border-cyan/40"
             >
               <div className="flex items-center justify-between">
                 <span
-                  className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${categoryColor[category]}`}
+                  className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${cls}`}
                 >
                   {category}
                 </span>
                 <span className="font-display text-[10px] text-ink-3">
                   {count}
+                  {t.battle.countSuffix}
                 </span>
               </div>
               <p className="mt-2 line-clamp-2 text-[11px] leading-snug text-ink-2">
