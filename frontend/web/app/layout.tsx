@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Orbitron, Zen_Kaku_Gothic_New } from "next/font/google";
+import { LangProvider } from "@/lib/i18n";
 import "./globals.css";
 
 const orbitron = Orbitron({
@@ -35,9 +36,11 @@ export default function RootLayout({
       className={`${orbitron.variable} ${zenKaku.variable} h-full antialiased`}
     >
       <body className="min-h-full">
-        <div className="bg-grid relative mx-auto min-h-dvh w-full max-w-[430px] bg-bg sm:border-x sm:border-line">
-          {children}
-        </div>
+        <LangProvider>
+          <div className="bg-grid relative mx-auto min-h-dvh w-full max-w-[430px] bg-bg sm:border-x sm:border-line">
+            {children}
+          </div>
+        </LangProvider>
       </body>
     </html>
   );

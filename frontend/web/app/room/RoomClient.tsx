@@ -10,22 +10,22 @@ import {
   SkipIcon,
   XIcon,
 } from "@/components/icons";
+import { useLang } from "@/lib/i18n";
 
 type Side = "affirmative" | "negative" | "team" | "none" | "ai";
 
-const phases: { label: string; step: number; side: Side; dur: number }[] = [
-  { label: "準備", step: 0, side: "none", dur: 60 },
-  { label: "立論・肯定側", step: 1, side: "affirmative", dur: 120 },
-  { label: "立論・否定側", step: 1, side: "negative", dur: 120 },
-  { label: "作戦タイム", step: 2, side: "team", dur: 60 },
-  { label: "反駁・肯定側", step: 3, side: "affirmative", dur: 120 },
-  { label: "反駁・否定側", step: 3, side: "negative", dur: 120 },
-  { label: "最終弁論・肯定側", step: 4, side: "affirmative", dur: 60 },
-  { label: "最終弁論・否定側", step: 4, side: "negative", dur: 60 },
-  { label: "AI採点", step: 5, side: "ai", dur: 30 },
+// フェーズ構成（ラベルは i18n の room.phases を同じ順で参照）
+const phases: { step: number; side: Side; dur: number }[] = [
+  { step: 0, side: "none", dur: 60 },
+  { step: 1, side: "affirmative", dur: 120 },
+  { step: 1, side: "negative", dur: 120 },
+  { step: 2, side: "team", dur: 60 },
+  { step: 3, side: "affirmative", dur: 120 },
+  { step: 3, side: "negative", dur: 120 },
+  { step: 4, side: "affirmative", dur: 60 },
+  { step: 4, side: "negative", dur: 60 },
+  { step: 5, side: "ai", dur: 30 },
 ];
-
-const steps = ["準備", "立論", "作戦", "反駁", "最終弁論", "採点"];
 
 const reactionEmojis = ["👏", "🔥", "🤔", "💡"];
 
@@ -35,10 +35,14 @@ function Avatar({
   player,
   speaking,
   color,
+  youLabel,
+  speakingLabel,
 }: {
   player: Player;
   speaking: boolean;
   color: "accent" | "blue" | "gold";
+  youLabel: string;
+  speakingLabel: string;
 }) {
   const ring = {
     accent: "border-accent",
@@ -55,11 +59,11 @@ function Avatar({
         {player.bot ? "AI" : player.name[0]}
       </span>
       <span className="max-w-16 truncate text-[10px] font-bold text-ink-2">
-        {player.you ? "あなた" : player.name}
+        {player.you ? youLabel : player.name}
       </span>
       {speaking && (
         <span className="rounded-full border border-line bg-surface-2 px-2 py-0.5 text-[9px] font-bold text-ink-2">
-          発話中
+          {speakingLabel}
         </span>
       )}
     </div>
@@ -68,6 +72,7 @@ function Avatar({
 
 export function RoomClient({ mode }: { mode: "ai" | "group" }) {
   const router = useRouter();
+  const { t } = useLang();
   const [phaseIdx, setPhaseIdx] = useState(0);
   const [remaining, setRemaining] = useState(phases[0].dur);
   const [micOn, setMicOn] = useState(true);
@@ -110,12 +115,12 @@ export function RoomClient({ mode }: { mode: "ai" | "group" }) {
 
   const affirmative: Player[] =
     mode === "ai"
-      ? [{ name: "イッキ", you: true }]
-      : [{ name: "イッキ", you: true }, { name: "ミサキ" }];
+      ? [{ name: "—", you: true }]
+      : [{ name: "—", you: true }, { name: t.room.players.misaki }];
   const negative: Player[] =
     mode === "ai"
       ? [{ name: "RONPA AI", bot: true }]
-      : [{ name: "ケンタ" }, { name: "ユウタ" }];
+      : [{ name: t.room.players.kenta }, { name: t.room.players.yuta }];
 
   const shown = Math.max(0, remaining);
   const mm = String(Math.floor(shown / 60)).padStart(2, "0");
@@ -134,24 +139,24 @@ export function RoomClient({ mode }: { mode: "ai" | "group" }) {
             <XIcon className="h-4 w-4" />
           </Link>
           <span className="rounded-full border border-accent/40 bg-accent-soft px-2 py-0.5 text-[10px] font-bold text-accent">
-            時事
+            {t.room.category}
           </span>
           <button
             onClick={skip}
             className="flex items-center gap-1 border border-line bg-surface-2 px-3 py-1.5 text-[10px] font-bold text-ink-2 hover:border-cyan/40"
           >
             <SkipIcon className="h-3 w-3" />
-            スキップ
+            {t.room.skip}
           </button>
         </div>
         <p className="mt-3 text-center text-sm font-bold leading-snug">
-          日本は救急車を有料化すべきか
+          {t.room.theme}
         </p>
         <p className="text-glow mt-2 text-center font-display text-4xl font-bold tabular-nums text-ink">
           {mm}:{ss}
         </p>
         <p className="mt-1.5 text-center text-[11px] font-bold tracking-[0.2em] text-cyan">
-          {phase.label}
+          {t.room.phases[phaseIdx]}
         </p>
         <div className="mt-2 h-1 overflow-hidden bg-surface-2">
           <div
@@ -161,7 +166,7 @@ export function RoomClient({ mode }: { mode: "ai" | "group" }) {
         </div>
         {/* フェーズステッパー */}
         <div className="mt-3 flex justify-between gap-1">
-          {steps.map((step, i) => (
+          {t.room.steps.map((step, i) => (
             <span
               key={step}
               className={`flex-1 border py-1 text-center text-[9px] font-bold ${
@@ -180,25 +185,27 @@ export function RoomClient({ mode }: { mode: "ai" | "group" }) {
       <section className="flex flex-1 flex-col justify-center gap-6 overflow-y-auto px-4 py-6">
         {phase.side === "team" && (
           <div className="border border-gold/40 bg-gold-soft px-4 py-2.5 text-center text-[11px] font-bold text-gold">
-            作戦タイム中 — チーム内通話のみ可能です
+            {t.room.strategyBanner}
           </div>
         )}
         {phase.side === "ai" && (
           <div className="border border-cyan/30 bg-cyan-soft px-4 py-2.5 text-center text-[11px] font-bold text-cyan">
-            AIが対戦ログを解析中…
+            {t.room.aiBanner}
           </div>
         )}
         <div>
           <p className="mb-3 text-center text-[11px] font-bold tracking-[0.3em] text-accent">
-            肯定側
+            {t.side.肯定}
           </p>
           <div className="flex justify-center gap-6">
             {affirmative.map((p, i) => (
               <Avatar
-                key={p.name}
+                key={`${p.name}-${i}`}
                 player={p}
                 color="accent"
                 speaking={phase.side === "affirmative" && i === 0}
+                youLabel={t.ai.you}
+                speakingLabel={t.room.speaking}
               />
             ))}
           </div>
@@ -210,24 +217,28 @@ export function RoomClient({ mode }: { mode: "ai" | "group" }) {
           <div className="flex justify-center gap-6">
             {negative.map((p, i) => (
               <Avatar
-                key={p.name}
+                key={`${p.name}-${i}`}
                 player={p}
                 color="blue"
                 speaking={phase.side === "negative" && i === 0}
+                youLabel={t.ai.you}
+                speakingLabel={t.room.speaking}
               />
             ))}
           </div>
           <p className="mt-3 text-center text-[11px] font-bold tracking-[0.3em] text-blue">
-            否定側
+            {t.side.否定}
           </p>
         </div>
         {mode === "group" && (
           <div className="flex items-center justify-center gap-2">
-            <span className="text-[10px] font-bold text-ink-3">ジャッジ:</span>
-            <span className="flex h-7 w-7 items-center justify-center rounded-full border border-gold bg-surface-2 text-[10px] font-bold">
-              ア
+            <span className="text-[10px] font-bold text-ink-3">
+              {t.room.judge}
             </span>
-            <span className="text-[10px] text-ink-2">アオイ</span>
+            <span className="flex h-7 w-7 items-center justify-center rounded-full border border-gold bg-surface-2 text-[10px] font-bold">
+              {t.room.players.aoi[0]}
+            </span>
+            <span className="text-[10px] text-ink-2">{t.room.players.aoi}</span>
           </div>
         )}
         {isLast && (
@@ -235,14 +246,13 @@ export function RoomClient({ mode }: { mode: "ai" | "group" }) {
             onClick={() => router.push("/result")}
             className="clip-corner glow-cyan mx-auto bg-cyan px-6 py-2.5 text-sm font-bold text-[#02131a] hover:bg-primary-hover"
           >
-            採点結果を見る
+            {t.room.viewResult}
           </button>
         )}
       </section>
 
       {/* 下部: マイク・メモ・リアクション */}
       <footer className="relative border-t border-line bg-surface/90 px-4 pb-6 pt-3">
-        {/* リアクションの浮遊表示 */}
         <div className="pointer-events-none absolute -top-14 right-8">
           {floats.map(({ id, emoji }) => (
             <span
@@ -272,7 +282,7 @@ export function RoomClient({ mode }: { mode: "ai" | "group" }) {
             <span className="flex h-11 w-11 items-center justify-center rounded-full border border-line bg-surface-2 hover:border-cyan/40">
               <NoteIcon className="h-5 w-5" />
             </span>
-            <span className="text-[9px] font-bold">メモ</span>
+            <span className="text-[9px] font-bold">{t.room.memo}</span>
           </button>
           <button
             onClick={() => setMicOn(!micOn)}
@@ -294,7 +304,7 @@ export function RoomClient({ mode }: { mode: "ai" | "group" }) {
             <span
               className={`text-[9px] font-bold ${micOn ? "text-cyan" : "text-ink-3"}`}
             >
-              {micOn ? "マイクON" : "ミュート中"}
+              {micOn ? t.room.micOn : t.room.muted}
             </span>
           </button>
           <Link
@@ -304,7 +314,7 @@ export function RoomClient({ mode }: { mode: "ai" | "group" }) {
             <span className="flex h-11 w-11 items-center justify-center rounded-full border border-line bg-surface-2 hover:border-accent/60">
               <XIcon className="h-5 w-5" />
             </span>
-            <span className="text-[9px] font-bold">退出</span>
+            <span className="text-[9px] font-bold">{t.room.leave}</span>
           </Link>
         </div>
       </footer>
@@ -321,22 +331,22 @@ export function RoomClient({ mode }: { mode: "ai" | "group" }) {
           >
             <div className="mx-auto h-1 w-10 rounded-full bg-surface-2" />
             <p className="mt-4 flex items-baseline gap-2 text-sm font-bold">
-              メモ
+              {t.room.memo}
               <span className="text-[8px] font-medium tracking-[0.3em] text-ink-3">
-                TACTICAL NOTE
+                {t.room.memoEn}
               </span>
             </p>
             <textarea
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
-              placeholder="相手の主張の弱点、反駁の要点などをメモ…"
+              placeholder={t.room.memoPlaceholder}
               className="mt-3 h-40 w-full resize-none border border-line bg-bg p-3 text-sm text-ink placeholder:text-ink-3 focus:border-cyan/60 focus:outline-none"
             />
             <button
               onClick={() => setMemoOpen(false)}
               className="clip-corner mt-3 w-full border border-line bg-surface-2 py-2.5 text-sm font-bold text-ink hover:border-cyan/40"
             >
-              閉じる
+              {t.room.close}
             </button>
           </div>
         </div>

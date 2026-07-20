@@ -27,7 +27,7 @@ export function RadarChart({ axes }: { axes: Axis[] }) {
   ];
 
   return (
-    <svg viewBox="0 0 260 240" className="mx-auto w-full max-w-[300px]">
+    <svg viewBox="-30 0 320 240" className="mx-auto w-full max-w-[320px]">
       {[0.25, 0.5, 0.75, 1].map((ratio) => (
         <polygon
           key={ratio}
