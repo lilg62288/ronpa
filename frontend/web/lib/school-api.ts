@@ -76,12 +76,14 @@ export function submitTranscript(
   studentNumber: number,
   transcript: string,
   studentName = "",
+  language: "ja" | "en" = "ja",
 ): Promise<Submission> {
   return post("/api/school/submissions", {
     code,
     student_number: studentNumber,
     student_name: studentName,
     transcript,
+    language,
   });
 }
 

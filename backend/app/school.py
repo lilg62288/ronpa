@@ -73,33 +73,84 @@ _SCHOOL_JUDGE_PROMPT = """あなたは学校の授業でディベート・ディ
 {transcript}"""
 
 
+_SCHOOL_JUDGE_PROMPT_EN = """You are an education professional coaching classroom debates and discussions.
+
+Assignment topic: {theme}
+{instructions_block}
+
+Below is the speech record (from speech recognition) of student No. {student_number} during an in-class debate/discussion.
+Judging only this student's statements, do the following:
+
+1. summary: Summarize their contributions in 3 lines or fewer so the teacher can grasp them at a glance
+2. Score each of the four criteria as an integer out of 10
+   - logic: connection between claims and evidence, consistency
+   - persuasion: clarity of expression, word choice
+   - rebuttal: how well they responded to and countered others' points
+   - structure: organization and ordering of their remarks
+3. good: Strengths (specific praise that encourages growth)
+4. improve: Areas to improve (concrete advice for the next class)
+
+The transcript may contain speech-recognition errors; infer the intent from context.
+If the student spoke very little, note that in the summary and score only what was said.
+Write all feedback in English.
+
+Respond ONLY in this JSON format:
+{{"summary": "summary", "scores": {{"logic": 0, "persuasion": 0, "rebuttal": 0, "structure": 0}}, "good": "strengths", "improve": "areas to improve"}}
+
+Speech record:
+{transcript}"""
+
+
 def submit(
     code: str,
     student_number: int,
     transcript: str,
     student_name: str = "",
+    language: str = "ja",
 ) -> Optional[dict]:
     a = _assignments.get(code)
     if not a:
         return None
+    en = language == "en"
 
     if MOCK_MODE:
-        result = {
-            "summary": "（モック要約）救急車の有料化に賛成の立場から、軽症利用の抑制と財源確保を主張。相手の「受診控え」への懸念には減免制度の存在を挙げて応答した。",
-            "scores": {"logic": 7, "persuasion": 6, "rebuttal": 7, "structure": 6},
-            "good": "（モック）根拠を挙げて主張する姿勢が身についています。相手の懸念に正面から応答できた点も良いです。",
-            "improve": "（モック）主張の順序を「結論→理由→具体例」に整理すると、より伝わりやすくなります。",
-        }
+        if en:
+            result = {
+                "summary": "(Mock summary) Argued in favor of charging for ambulances, citing reduced non-urgent use and funding. Responded to concerns about care avoidance by noting exemption schemes.",
+                "scores": {"logic": 7, "persuasion": 6, "rebuttal": 7, "structure": 6},
+                "good": "(Mock) You back your claims with evidence and answered the opposing concern head-on.",
+                "improve": "(Mock) Order your points as conclusion → reasons → examples for clearer delivery.",
+            }
+        else:
+            result = {
+                "summary": "（モック要約）救急車の有料化に賛成の立場から、軽症利用の抑制と財源確保を主張。相手の「受診控え」への懸念には減免制度の存在を挙げて応答した。",
+                "scores": {"logic": 7, "persuasion": 6, "rebuttal": 7, "structure": 6},
+                "good": "（モック）根拠を挙げて主張する姿勢が身についています。相手の懸念に正面から応答できた点も良いです。",
+                "improve": "（モック）主張の順序を「結論→理由→具体例」に整理すると、より伝わりやすくなります。",
+            }
     else:
-        instructions_block = (
-            f"先生からの指示: {a['instructions']}" if a["instructions"] else ""
-        )
-        prompt = _SCHOOL_JUDGE_PROMPT.format(
-            theme=a["theme"],
-            instructions_block=instructions_block,
-            student_number=student_number,
-            transcript=transcript.strip() or "（発言記録なし）",
-        )
+        if en:
+            instructions_block = (
+                f"Teacher's instructions: {a['instructions']}"
+                if a["instructions"]
+                else ""
+            )
+            prompt = _SCHOOL_JUDGE_PROMPT_EN.format(
+                theme=a["theme"],
+                instructions_block=instructions_block,
+                student_number=student_number,
+                transcript=transcript.strip() or "(no speech record)",
+            )
+        else:
+            instructions_block = (
+                f"先生からの指示: {a['instructions']}" if a["instructions"] else ""
+            )
+            prompt = _SCHOOL_JUDGE_PROMPT.format(
+                theme=a["theme"],
+                instructions_block=instructions_block,
+                student_number=student_number,
+                transcript=transcript.strip() or "（発言記録なし）",
+            )
         completion = _client.chat.completions.create(
             model=MODEL,
             messages=[{"role": "user", "content": prompt}],

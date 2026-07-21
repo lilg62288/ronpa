@@ -94,6 +94,7 @@ class SchoolSubmitRequest(BaseModel):
     student_number: int = Field(ge=1, le=999)
     student_name: str = Field(default="", max_length=50)
     transcript: str = Field(max_length=50000)
+    language: str = "ja"  # ja | en
 
 
 @app.post("/api/school/assignments")
@@ -113,7 +114,11 @@ def school_get(code: str):
 def school_submit(req: SchoolSubmitRequest):
     try:
         record = school.submit(
-            req.code, req.student_number, req.transcript, req.student_name
+            req.code,
+            req.student_number,
+            req.transcript,
+            req.student_name,
+            req.language,
         )
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"AI採点に失敗しました: {e}")

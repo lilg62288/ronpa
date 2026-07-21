@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { XIcon } from "@/components/icons";
+import { LangToggle, useLang, type Dict } from "@/lib/i18n";
 import {
   createAssignment,
   getAssignment,
@@ -12,14 +13,14 @@ import {
   type SubmissionList,
 } from "@/lib/school-api";
 
-const axisLabels: [keyof Submission["scores"], string][] = [
-  ["logic", "論理"],
-  ["persuasion", "説得"],
-  ["rebuttal", "反論"],
-  ["structure", "構成"],
+const axisKeys: (keyof Submission["scores"])[] = [
+  "logic",
+  "persuasion",
+  "rebuttal",
+  "structure",
 ];
 
-function SubmissionCard({ s }: { s: Submission }) {
+function SubmissionCard({ s, tt }: { s: Submission; tt: Dict["school"]["teacher"] }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="border border-line bg-surface/80 p-4">
@@ -30,7 +31,9 @@ function SubmissionCard({ s }: { s: Submission }) {
           </span>
           <div>
             <p className="text-sm font-bold">
-              出席番号 {s.student_number} 番
+              {tt.noPre}
+              {s.student_number}
+              {tt.noPost}
               {s.student_name && (
                 <span className="ml-1.5 text-xs font-normal text-ink-2">
                   {s.student_name}
@@ -38,7 +41,8 @@ function SubmissionCard({ s }: { s: Submission }) {
               )}
             </p>
             <p className="text-[10px] text-ink-3">
-              {new Date(s.submitted_at * 1000).toLocaleTimeString("ja-JP")} 提出
+              {new Date(s.submitted_at * 1000).toLocaleTimeString("ja-JP")}
+              {tt.submittedSuffix}
             </p>
           </div>
         </div>
@@ -51,12 +55,12 @@ function SubmissionCard({ s }: { s: Submission }) {
         {s.summary}
       </p>
       <div className="mt-3 grid grid-cols-4 gap-1.5">
-        {axisLabels.map(([key, label]) => (
+        {axisKeys.map((key, i) => (
           <div
             key={key}
             className="border border-line bg-bg px-2 py-1.5 text-center"
           >
-            <p className="text-[9px] text-ink-3">{label}</p>
+            <p className="text-[9px] text-ink-3">{tt.axesShort[i]}</p>
             <p className="font-display text-sm font-bold">{s.scores[key]}</p>
           </div>
         ))}
@@ -65,28 +69,26 @@ function SubmissionCard({ s }: { s: Submission }) {
         onClick={() => setOpen(!open)}
         className="mt-3 text-[11px] font-bold text-cyan"
       >
-        {open ? "▲ 詳細を閉じる" : "▼ フィードバック・発言記録を見る"}
+        {open ? tt.detailClose : tt.detailOpen}
       </button>
       {open && (
         <div className="mt-2 flex flex-col gap-2">
           <div className="border border-green/40 bg-green-soft p-3">
-            <p className="text-[10px] font-bold text-green">良かった点</p>
+            <p className="text-[10px] font-bold text-green">{tt.good}</p>
             <p className="mt-1 text-[11px] leading-relaxed text-ink-2">
               {s.good}
             </p>
           </div>
           <div className="border border-accent/40 bg-accent-soft p-3">
-            <p className="text-[10px] font-bold text-accent">改善点</p>
+            <p className="text-[10px] font-bold text-accent">{tt.improve}</p>
             <p className="mt-1 text-[11px] leading-relaxed text-ink-2">
               {s.improve}
             </p>
           </div>
           <div className="border border-line bg-bg p-3">
-            <p className="text-[10px] font-bold text-ink-3">
-              発言記録（文字起こし全文）
-            </p>
+            <p className="text-[10px] font-bold text-ink-3">{tt.transcript}</p>
             <p className="mt-1 whitespace-pre-wrap text-[11px] leading-relaxed text-ink-2">
-              {s.transcript || "（記録なし）"}
+              {s.transcript || tt.noRecord}
             </p>
           </div>
         </div>
@@ -96,6 +98,8 @@ function SubmissionCard({ s }: { s: Submission }) {
 }
 
 export default function TeacherPage() {
+  const { t } = useLang();
+  const tt = t.school.teacher;
   const [theme, setTheme] = useState("");
   const [instructions, setInstructions] = useState("");
   const [teacherName, setTeacherName] = useState("");
@@ -131,7 +135,7 @@ export default function TeacherPage() {
         await createAssignment(theme.trim(), instructions.trim(), teacherName),
       );
     } catch (e) {
-      setError(e instanceof Error ? e.message : "作成に失敗しました");
+      setError(e instanceof Error ? e.message : tt.createFail);
     } finally {
       setCreating(false);
     }
@@ -145,7 +149,7 @@ export default function TeacherPage() {
     try {
       setAssignment(await getAssignment(existingCode.trim()));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "受信箱を開けませんでした");
+      setError(e instanceof Error ? e.message : tt.openFail);
     } finally {
       setOpening(false);
     }
@@ -163,47 +167,45 @@ export default function TeacherPage() {
         <p className="text-[9px] font-medium tracking-[0.3em] text-gold">
           FOR SCHOOL / TEACHER
         </p>
-        <span className="w-8" />
+        <LangToggle />
       </div>
 
       {!assignment ? (
         <>
-          <h1 className="mt-6 text-lg font-bold">課題を作成</h1>
-          <p className="mt-1 text-xs text-ink-3">
-            作成すると6桁の参加コードが発行され、生徒に共有できます
-          </p>
+          <h1 className="mt-6 text-lg font-bold">{tt.createTitle}</h1>
+          <p className="mt-1 text-xs text-ink-3">{tt.createSub}</p>
           <div className="mt-5 flex flex-col gap-4">
             <label className="block">
               <span className="text-xs font-bold text-ink-2">
-                テーマ <span className="text-accent">*</span>
+                {tt.topicLabel} <span className="text-accent">*</span>
               </span>
               <input
                 value={theme}
                 onChange={(e) => setTheme(e.target.value)}
-                placeholder="例: 日本は救急車を有料化すべきか"
+                placeholder={tt.topicPh}
                 className="mt-1.5 w-full border border-line bg-bg p-3 text-sm text-ink placeholder:text-ink-3 focus:border-gold/60 focus:outline-none"
               />
             </label>
             <label className="block">
               <span className="text-xs font-bold text-ink-2">
-                指示・補足（任意）
+                {tt.instLabel}
               </span>
               <textarea
                 value={instructions}
                 onChange={(e) => setInstructions(e.target.value)}
                 rows={3}
-                placeholder="例: 班ごとに肯定・否定に分かれて10分間討論。根拠を最低1つ挙げること"
+                placeholder={tt.instPh}
                 className="mt-1.5 w-full resize-none border border-line bg-bg p-3 text-sm text-ink placeholder:text-ink-3 focus:border-gold/60 focus:outline-none"
               />
             </label>
             <label className="block">
               <span className="text-xs font-bold text-ink-2">
-                先生の名前（任意）
+                {tt.nameLabel}
               </span>
               <input
                 value={teacherName}
                 onChange={(e) => setTeacherName(e.target.value)}
-                placeholder="例: 田中"
+                placeholder={tt.namePh}
                 className="mt-1.5 w-full border border-line bg-bg p-3 text-sm text-ink placeholder:text-ink-3 focus:border-gold/60 focus:outline-none"
               />
             </label>
@@ -217,18 +219,14 @@ export default function TeacherPage() {
               disabled={!theme.trim() || creating}
               className="clip-corner glow-cyan bg-cyan py-3.5 text-sm font-bold tracking-widest text-[#02131a] hover:bg-primary-hover disabled:opacity-40 disabled:shadow-none"
             >
-              {creating ? "作成中…" : "課題を作成してコードを発行"}
+              {creating ? tt.creating : tt.createBtn}
             </button>
           </div>
 
           {/* 既存の受信箱への復帰 */}
           <div className="mt-8 border-t border-line pt-5">
-            <p className="text-xs font-bold text-ink-2">
-              発行済みのコードで受信箱を開く
-            </p>
-            <p className="mt-0.5 text-[10px] text-ink-3">
-              タブを閉じてしまった場合はこちらから復帰できます
-            </p>
+            <p className="text-xs font-bold text-ink-2">{tt.reopenTitle}</p>
+            <p className="mt-0.5 text-[10px] text-ink-3">{tt.reopenSub}</p>
             <div className="mt-2.5 flex gap-2">
               <input
                 value={existingCode}
@@ -237,7 +235,7 @@ export default function TeacherPage() {
                 }
                 inputMode="numeric"
                 maxLength={6}
-                placeholder="6桁コード"
+                placeholder={tt.reopenPh}
                 className="w-36 border border-line bg-bg p-2.5 text-center font-display text-sm tracking-[0.2em] text-ink placeholder:tracking-normal placeholder:text-ink-3 focus:border-gold/60 focus:outline-none"
               />
               <button
@@ -245,7 +243,7 @@ export default function TeacherPage() {
                 disabled={!/^\d{6}$/.test(existingCode.trim()) || opening}
                 className="clip-corner border border-gold/40 bg-gold-soft px-4 text-xs font-bold text-gold hover:border-gold disabled:opacity-40"
               >
-                {opening ? "確認中…" : "受信箱を開く"}
+                {opening ? tt.checking : tt.reopenBtn}
               </button>
             </div>
           </div>
@@ -255,7 +253,7 @@ export default function TeacherPage() {
           {/* 参加コード */}
           <div className="mt-6 border border-gold/40 bg-surface/80 p-5 text-center">
             <p className="text-[9px] tracking-[0.3em] text-ink-3">
-              参加コード / CLASS CODE
+              {tt.codeLabel}
             </p>
             <p className="text-glow mt-2 font-display text-5xl font-bold tracking-[0.15em] text-gold">
               {assignment.code}
@@ -266,37 +264,33 @@ export default function TeacherPage() {
                 {assignment.instructions}
               </p>
             )}
-            <p className="mt-3 text-[10px] text-ink-3">
-              生徒に「生徒として参加」からこのコードと出席番号を入力してもらってください
-            </p>
+            <p className="mt-3 text-[10px] text-ink-3">{tt.shareNote}</p>
           </div>
 
           {/* 受信箱 */}
           <div className="mt-6 flex items-center justify-between">
             <h2 className="flex items-baseline gap-2 text-sm font-bold">
-              提出受信箱
+              {tt.inbox}
               <span className="text-[8px] font-medium tracking-[0.3em] text-ink-3">
-                INBOX
+                {tt.inboxEn}
               </span>
             </h2>
             <span className="rounded-full bg-surface-2 px-2.5 py-0.5 font-display text-xs font-bold text-cyan">
               {inbox?.count ?? 0}
             </span>
           </div>
-          <p className="mt-1 text-[10px] text-ink-3">
-            5秒ごとに自動更新。生徒が「終了して送信」すると届きます
-          </p>
+          <p className="mt-1 text-[10px] text-ink-3">{tt.pollNote}</p>
           <div className="mt-3 flex flex-col gap-3">
             {inbox && inbox.count > 0 ? (
               inbox.submissions.map((s) => (
-                <SubmissionCard key={s.student_number} s={s} />
+                <SubmissionCard key={s.student_number} s={s} tt={tt} />
               ))
             ) : (
               <div className="border border-dashed border-line p-8 text-center text-xs text-ink-3">
-                まだ提出はありません
+                {tt.empty}
                 <br />
                 <span className="mt-1 inline-block animate-pulse">
-                  受信待機中…
+                  {tt.waiting}
                 </span>
               </div>
             )}
