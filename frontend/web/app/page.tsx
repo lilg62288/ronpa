@@ -44,6 +44,15 @@ export default function SplashPage() {
         <p className="mt-2 text-center text-[10px] leading-relaxed text-ink-3">
           {t.splash.terms}
         </p>
+        <div className="flex items-center justify-center gap-3 text-[10px] text-cyan/70">
+          <Link href="/terms" className="hover:text-cyan">
+            {t.splash.termsLabel}
+          </Link>
+          <span className="text-ink-3">・</span>
+          <Link href="/privacy" className="hover:text-cyan">
+            {t.splash.privacyLabel}
+          </Link>
+        </div>
       </div>
     </main>
   );

@@ -23,6 +23,8 @@ const ja = {
     login: "ログイン",
     terms:
       "登録すると利用規約とプライバシーポリシーに同意したものとみなされます",
+    termsLabel: "利用規約",
+    privacyLabel: "プライバシーポリシー",
   },
   auth: {
     signupTitle: "新規登録",
@@ -319,6 +321,8 @@ const en: typeof ja = {
     signup: "Sign up & start",
     login: "Log in",
     terms: "By signing up, you agree to our Terms of Service and Privacy Policy",
+    termsLabel: "Terms of Service",
+    privacyLabel: "Privacy Policy",
   },
   auth: {
     signupTitle: "Sign up",

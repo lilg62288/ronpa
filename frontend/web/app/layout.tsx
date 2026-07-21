@@ -16,10 +16,28 @@ const zenKaku = Zen_Kaku_Gothic_New({
   weight: ["400", "500", "700", "900"],
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ronpa-mu.vercel.app";
+const TITLE = "RONPA - リアルタイム対人ディベート × AI採点";
+const DESCRIPTION =
+  "いつでもどこでも、論理的思考力と説得力を「実践」で鍛える道場。日本初、リアルタイム対人ディベート × AI採点で論理力を磨く。";
+
 export const metadata: Metadata = {
-  title: "RONPA - リアルタイム対人ディベート × AI採点",
-  description:
-    "いつでもどこでも、論理的思考力と説得力を「実践」で鍛える道場。日本初、リアルタイム対人ディベート × AI採点で論理力を磨く。",
+  metadataBase: new URL(SITE_URL),
+  title: TITLE,
+  description: DESCRIPTION,
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    url: SITE_URL,
+    siteName: "RONPA",
+    locale: "ja_JP",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+  },
 };
 
 export const viewport: Viewport = {
