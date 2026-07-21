@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Orbitron, Zen_Kaku_Gothic_New } from "next/font/google";
+import { AuthProvider } from "@/lib/auth";
 import { LangProvider } from "@/lib/i18n";
 import "./globals.css";
 
@@ -37,9 +38,11 @@ export default function RootLayout({
     >
       <body className="min-h-full">
         <LangProvider>
-          <div className="bg-grid relative mx-auto min-h-dvh w-full max-w-[430px] bg-bg sm:border-x sm:border-line">
-            {children}
-          </div>
+          <AuthProvider>
+            <div className="bg-grid relative mx-auto min-h-dvh w-full max-w-[430px] bg-bg sm:border-x sm:border-line">
+              {children}
+            </div>
+          </AuthProvider>
         </LangProvider>
       </body>
     </html>

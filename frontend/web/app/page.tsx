@@ -30,13 +30,13 @@ export default function SplashPage() {
       </div>
       <div className="flex flex-col gap-3">
         <Link
-          href="/home"
+          href="/auth?mode=signup"
           className="clip-corner glow-cyan bg-cyan py-3.5 text-center text-sm font-bold tracking-widest text-[#02131a] hover:bg-primary-hover"
         >
           {t.splash.signup}
         </Link>
         <Link
-          href="/home"
+          href="/auth?mode=login"
           className="clip-corner border border-cyan/30 bg-cyan-soft py-3.5 text-center text-sm font-bold tracking-widest text-cyan hover:border-cyan/60"
         >
           {t.splash.login}

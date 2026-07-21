@@ -1,31 +1,51 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ChevronRightIcon, CrownIcon } from "@/components/icons";
+import { useAuth } from "@/lib/auth";
 import { LangToggle, useLang } from "@/lib/i18n";
 
 const statValues = ["24", "15", "62%"];
 
 export default function MyPage() {
   const { t } = useLang();
+  const router = useRouter();
+  const { user, signOut } = useAuth();
+
+  // ログイン中はメールのユーザー名部分を表示、未ログインはデモ名
+  const displayName = user?.email ? user.email.split("@")[0] : "イッキ";
+  const avatarChar = displayName[0]?.toUpperCase() ?? "イ";
+
+  const handleLogout = async () => {
+    await signOut();
+    router.push("/");
+  };
+
   return (
     <main className="px-4 pt-6">
       {/* プロフィール */}
       <header className="flex items-center gap-4">
         <span className="clip-corner flex h-14 w-14 items-center justify-center border border-cyan/40 bg-cyan-soft text-xl font-bold text-cyan">
-          イ
+          {avatarChar}
         </span>
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-lg font-bold">イッキ</h1>
-            <span className="rounded-full border border-line px-2 py-0.5 text-[9px] font-bold tracking-widest text-ink-3">
+            <h1 className="truncate text-lg font-bold">{displayName}</h1>
+            <span className="shrink-0 rounded-full border border-line px-2 py-0.5 text-[9px] font-bold tracking-widest text-ink-3">
               {t.mypage.plan}
             </span>
           </div>
-          <p className="mt-1 flex items-center gap-1.5 text-xs font-bold text-gold">
-            <CrownIcon className="h-4 w-4" />
-            {t.mypage.rank} <span className="font-display">1420</span>
-          </p>
+          {user?.email ? (
+            <p className="mt-1 truncate text-[11px] text-ink-3">
+              {t.auth.loggedInAs}: {user.email}
+            </p>
+          ) : (
+            <p className="mt-1 flex items-center gap-1.5 text-xs font-bold text-gold">
+              <CrownIcon className="h-4 w-4" />
+              {t.mypage.rank} <span className="font-display">1420</span>
+            </p>
+          )}
         </div>
         <LangToggle />
       </header>
@@ -133,9 +153,21 @@ export default function MyPage() {
               <ChevronRightIcon className="h-4 w-4 text-ink-3" />
             </button>
           ))}
-          <button className="w-full px-4 py-3 text-left text-sm font-bold text-accent hover:bg-surface-2">
-            {t.mypage.logout}
-          </button>
+          {user ? (
+            <button
+              onClick={handleLogout}
+              className="w-full px-4 py-3 text-left text-sm font-bold text-accent hover:bg-surface-2"
+            >
+              {t.mypage.logout}
+            </button>
+          ) : (
+            <Link
+              href="/auth?mode=login"
+              className="block w-full px-4 py-3 text-left text-sm font-bold text-cyan hover:bg-surface-2"
+            >
+              {t.splash.login}
+            </Link>
+          )}
         </div>
       </section>
     </main>

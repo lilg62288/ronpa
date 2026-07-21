@@ -1,0 +1,90 @@
+"use client";
+
+// Supabase 認証のコンテキスト（ログイン状態をアプリ全体で共有）
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
+import type { User } from "@supabase/supabase-js";
+import { isSupabaseConfigured, supabase } from "./supabase";
+
+type AuthResult = { error: string | null };
+
+type AuthContextValue = {
+  user: User | null;
+  loading: boolean;
+  configured: boolean;
+  signUp: (email: string, password: string) => Promise<AuthResult>;
+  signIn: (email: string, password: string) => Promise<AuthResult>;
+  signOut: () => Promise<void>;
+};
+
+const AuthContext = createContext<AuthContextValue>({
+  user: null,
+  loading: true,
+  configured: false,
+  signUp: async () => ({ error: "未設定" }),
+  signIn: async () => ({ error: "未設定" }),
+  signOut: async () => {},
+});
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+    // 起動時に既存セッションを復元
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null);
+      setLoading(false);
+    });
+    // ログイン/ログアウトを監視
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  const signUp = async (email: string, password: string): Promise<AuthResult> => {
+    if (!supabase) return { error: "認証が設定されていません" };
+    const { error } = await supabase.auth.signUp({ email, password });
+    return { error: error?.message ?? null };
+  };
+
+  const signIn = async (email: string, password: string): Promise<AuthResult> => {
+    if (!supabase) return { error: "認証が設定されていません" };
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    return { error: error?.message ?? null };
+  };
+
+  const signOut = async () => {
+    await supabase?.auth.signOut();
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        configured: isSupabaseConfigured,
+        signUp,
+        signIn,
+        signOut,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  return useContext(AuthContext);
+}
