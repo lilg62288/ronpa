@@ -210,37 +210,45 @@ def start_debate(
     }
 
 
+def _mock_first_argument(s: dict, en: bool) -> str:
+    if en:
+        return (
+            f"(Demo) I affirm: \"{s['theme']}\". "
+            "Three reasons: first, the social benefit is significant; second, it is cost-effective; "
+            "third, it aligns with global trends. Your rebuttal, please."
+        )
+    return (
+        f"（デモ応答）「{s['theme']}」に肯定側として賛成します。"
+        "理由は3点。第一に社会的便益が大きいこと、第二に費用対効果が高いこと、"
+        "第三に国際的な潮流に合致することです。反論をどうぞ。"
+    )
+
+
 def _first_argument(s: dict) -> str:
     """AIが先攻（肯定側）の場合の立論を生成する"""
     level = LEVELS.get(s.get("level", DEFAULT_LEVEL), LEVELS[DEFAULT_LEVEL])
     en = s.get("language") == "en"
     if MOCK_MODE:
-        if en:
-            return (
-                f"(Mock argument) I affirm: \"{s['theme']}\". "
-                "Three reasons: first, the social benefit is significant; second, it is cost-effective; "
-                "third, it aligns with global trends. Your rebuttal, please."
-            )
-        return (
-            f"（モック立論）「{s['theme']}」に肯定側として賛成します。"
-            "理由は3点。第一に社会的便益が大きいこと、第二に費用対効果が高いこと、"
-            "第三に国際的な潮流に合致することです。反論をどうぞ。"
-        )
+        return _mock_first_argument(s, en)
     trigger = (
         "(Moderator) The debate begins. As the Pro side, please present your opening argument."
         if en
         else "（進行係）ディベートを開始します。肯定側のあなたから立論をどうぞ。"
     )
-    completion = _client.chat.completions.create(
-        model=MODEL,
-        messages=[
-            {"role": "system", "content": _opponent_system_prompt(s)},
-            {"role": "user", "content": trigger},
-        ],
-        max_tokens=400,
-        temperature=level["temperature"],
-    )
-    return (completion.choices[0].message.content or "").strip()
+    try:
+        completion = _client.chat.completions.create(
+            model=MODEL,
+            messages=[
+                {"role": "system", "content": _opponent_system_prompt(s)},
+                {"role": "user", "content": trigger},
+            ],
+            max_tokens=400,
+            temperature=level["temperature"],
+        )
+        return (completion.choices[0].message.content or "").strip()
+    except Exception as e:  # OpenAI残高不足・障害時はデモ応答にフォールバック
+        print(f"[debate] OpenAI unavailable, using demo reply: {e}")
+        return _mock_first_argument(s, en)
 
 
 def get_session(debate_id: str) -> Optional[dict]:
@@ -289,35 +297,43 @@ def reply_to(debate_id: str, message: str) -> dict:
 
     level = LEVELS.get(s.get("level", DEFAULT_LEVEL), LEVELS[DEFAULT_LEVEL])
     if MOCK_MODE:
-        mock_by_level = {
-            "easy": "（モック・簡単）なるほど、いい視点ですね。ただ、費用の面はどうでしょう？もう少し詳しく聞かせてください。",
-            "normal": f"（モック・普通）その主張には根拠が不足しています。{s['theme']}について、費用対効果の観点から反論します。具体的なデータを示していただけますか？",
-            "hard": "（モック・難しい）その論には3つの飛躍があります。第一に定義が曖昧、第二に因果と相関の混同、第三に反例の無視です。順に反証します。",
-            "oni": "（モック・鬼）前提から誤っています。あなたの主張は根拠・論理・定義の全てに穴があります。まず、その統計の出典と調査年を即答できますか？",
-        }
-        mock_by_level_en = {
-            "easy": "(Mock/Easy) That's an interesting point! But what about the cost side? Tell me more.",
-            "normal": f"(Mock/Normal) Your claim lacks evidence. Regarding \"{s['theme']}\", I rebut from a cost-effectiveness standpoint. Can you show concrete data?",
-            "hard": "(Mock/Hard) Your argument makes three leaps: vague definitions, confusing correlation with causation, and ignoring counterexamples. I will refute each in turn.",
-            "oni": "(Mock/Oni) Your premise itself is flawed. Every part of your claim — evidence, logic, definitions — has holes. First: can you instantly cite the source and year of that statistic?",
-        }
-        table = mock_by_level_en if en else mock_by_level
-        reply = table[s.get("level", DEFAULT_LEVEL)]
+        reply = _mock_reply(s, en)
     else:
-        history = [
-            {"role": "assistant" if m["role"] == "ai" else "user", "content": m["content"]}
-            for m in s["messages"]
-        ]
-        completion = _client.chat.completions.create(
-            model=MODEL,
-            messages=[{"role": "system", "content": _opponent_system_prompt(s)}, *history],
-            max_tokens=400,
-            temperature=level["temperature"],
-        )
-        reply = (completion.choices[0].message.content or "").strip()
+        try:
+            history = [
+                {"role": "assistant" if m["role"] == "ai" else "user", "content": m["content"]}
+                for m in s["messages"]
+            ]
+            completion = _client.chat.completions.create(
+                model=MODEL,
+                messages=[{"role": "system", "content": _opponent_system_prompt(s)}, *history],
+                max_tokens=400,
+                temperature=level["temperature"],
+            )
+            reply = (completion.choices[0].message.content or "").strip()
+        except Exception as e:  # OpenAI残高不足・障害時はデモ応答へ
+            print(f"[debate] OpenAI unavailable, using demo reply: {e}")
+            reply = _mock_reply(s, en)
 
     s["messages"].append({"role": "ai", "content": reply})
     return {"reply": reply, "ended": False}
+
+
+def _mock_reply(s: dict, en: bool) -> str:
+    mock_by_level = {
+        "easy": "（デモ応答・簡単）なるほど、いい視点ですね。ただ、費用の面はどうでしょう？もう少し詳しく聞かせてください。",
+        "normal": f"（デモ応答・普通）その主張には根拠が不足しています。{s['theme']}について、費用対効果の観点から反論します。具体的なデータを示していただけますか？",
+        "hard": "（デモ応答・難しい）その論には3つの飛躍があります。第一に定義が曖昧、第二に因果と相関の混同、第三に反例の無視です。順に反証します。",
+        "oni": "（デモ応答・鬼）前提から誤っています。あなたの主張は根拠・論理・定義の全てに穴があります。まず、その統計の出典と調査年を即答できますか？",
+    }
+    mock_by_level_en = {
+        "easy": "(Demo/Easy) That's an interesting point! But what about the cost side? Tell me more.",
+        "normal": f"(Demo/Normal) Your claim lacks evidence. Regarding \"{s['theme']}\", I rebut from a cost-effectiveness standpoint. Can you show concrete data?",
+        "hard": "(Demo/Hard) Your argument makes three leaps: vague definitions, confusing correlation with causation, and ignoring counterexamples. I will refute each in turn.",
+        "oni": "(Demo/Oni) Your premise itself is flawed. Every part of your claim — evidence, logic, definitions — has holes. First: can you instantly cite the source and year of that statistic?",
+    }
+    table = mock_by_level_en if en else mock_by_level
+    return table[s.get("level", DEFAULT_LEVEL)]
 
 
 _JUDGE_PROMPT = """あなたはプロのディベート審査員です。
@@ -361,27 +377,30 @@ Debate log:
 {log}"""
 
 
+def _mock_score(en: bool) -> dict:
+    if en:
+        return {
+            "scores": {"logic": 7, "persuasion": 6, "rebuttal": 8, "structure": 7},
+            "good": "(Demo) Sharp counterarguments that answered the opponent's points head-on.",
+            "improve": "(Demo) Claims lack numerical evidence. Restate your conclusion at the end.",
+            "summary": "(Demo) Solid but missing a decisive blow. Strengthen your evidence base.",
+            "winner": "user",
+        }
+    return {
+        "scores": {"logic": 7, "persuasion": 6, "rebuttal": 8, "structure": 7},
+        "good": "（デモ採点）反論の切り返しが的確で、相手の論点に正面から答えられていた。",
+        "improve": "（デモ採点）数値根拠が不足しており、主張の裏付けが弱い。結論の再提示も忘れずに。",
+        "summary": "（デモ採点）堅実だが決定打に欠ける。根拠の厚みが今後の課題。",
+        "winner": "user",
+    }
+
+
 def score_debate(debate_id: str) -> dict:
     s = _sessions[debate_id]
     en = s.get("language") == "en"
 
     if MOCK_MODE:
-        if en:
-            result = {
-                "scores": {"logic": 7, "persuasion": 6, "rebuttal": 8, "structure": 7},
-                "good": "(Mock) Sharp counterarguments that answered the opponent's points head-on.",
-                "improve": "(Mock) Claims lack numerical evidence. Restate your conclusion at the end.",
-                "summary": "(Mock) Solid but missing a decisive blow. Strengthen your evidence base.",
-                "winner": "user",
-            }
-        else:
-            result = {
-                "scores": {"logic": 7, "persuasion": 6, "rebuttal": 8, "structure": 7},
-                "good": "（モック採点）反論の切り返しが的確で、相手の論点に正面から答えられていた。",
-                "improve": "（モック採点）数値根拠が不足しており、主張の裏付けが弱い。結論の再提示も忘れずに。",
-                "summary": "（モック採点）堅実だが決定打に欠ける。根拠の厚みが今後の課題。",
-                "winner": "user",
-            }
+        result = _mock_score(en)
     else:
         if en:
             side_en = {"肯定": "Pro", "否定": "Con"}
@@ -408,14 +427,18 @@ def score_debate(debate_id: str) -> dict:
                 ai_side=s["ai_side"],
                 log=log or "（発言なし）",
             )
-        completion = _client.chat.completions.create(
-            model=MODEL,
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=800,
-            temperature=0.3,
-            response_format={"type": "json_object"},
-        )
-        result = json.loads(completion.choices[0].message.content or "{}")
+        try:
+            completion = _client.chat.completions.create(
+                model=MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=800,
+                temperature=0.3,
+                response_format={"type": "json_object"},
+            )
+            result = json.loads(completion.choices[0].message.content or "{}")
+        except Exception as e:  # OpenAI残高不足・障害時はデモ採点へ
+            print(f"[debate] OpenAI unavailable, using demo score: {e}")
+            result = _mock_score(en)
 
     scores = result.get("scores", {})
     clamped = {
