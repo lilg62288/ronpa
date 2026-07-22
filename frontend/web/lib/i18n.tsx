@@ -81,6 +81,7 @@ const ja = {
     themeBank: "テーマバンク",
     themeBankEn: "THEME BANK",
     countSuffix: "件",
+    soon: "準備中",
   },
   mypage: {
     plan: "FREE",
@@ -370,6 +371,7 @@ const en: typeof ja = {
     themeBank: "Theme Bank",
     themeBankEn: "テーマバンク",
     countSuffix: "",
+    soon: "Coming soon",
   },
   mypage: {
     plan: "FREE",

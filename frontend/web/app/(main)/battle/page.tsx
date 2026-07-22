@@ -19,6 +19,7 @@ export default function BattlePage() {
       desc: t.battle.aiDesc,
       Icon: BotIcon,
       iconClass: "border-gold/40 bg-gold-soft text-gold",
+      soon: false,
     },
     {
       href: "/room?mode=random",
@@ -27,6 +28,7 @@ export default function BattlePage() {
       desc: t.battle.randomDesc,
       Icon: SwordsIcon,
       iconClass: "border-accent/40 bg-accent-soft text-accent",
+      soon: true,
     },
     {
       href: "/room?mode=group",
@@ -35,6 +37,7 @@ export default function BattlePage() {
       desc: t.battle.groupDesc,
       Icon: UsersIcon,
       iconClass: "border-blue/40 bg-blue-soft text-blue",
+      soon: true,
     },
   ];
 
@@ -54,15 +57,11 @@ export default function BattlePage() {
       </div>
 
       <div className="mt-4 flex flex-col gap-3">
-        {modes.map(({ href, tag, title, desc, Icon, iconClass }) => (
-          <Link
-            key={href}
-            href={href}
-            className="border border-line bg-surface/80 p-4 hover:border-cyan/40"
-          >
+        {modes.map(({ href, tag, title, desc, Icon, iconClass, soon }) => {
+          const inner = (
             <div className="flex items-start gap-3.5">
               <span
-                className={`clip-corner flex h-12 w-12 shrink-0 items-center justify-center border ${iconClass}`}
+                className={`clip-corner flex h-12 w-12 shrink-0 items-center justify-center border ${iconClass} ${soon ? "opacity-50" : ""}`}
               >
                 <Icon className="h-6 w-6" />
               </span>
@@ -70,17 +69,39 @@ export default function BattlePage() {
                 <p className="text-[8px] font-medium tracking-[0.25em] text-ink-3">
                   {tag}
                 </p>
-                <p className="mt-0.5 flex items-center gap-1 text-base font-bold">
+                <p className="mt-0.5 flex items-center gap-2 text-base font-bold">
                   {title}
-                  <ChevronRightIcon className="h-4 w-4 text-cyan/60" />
+                  {soon ? (
+                    <span className="rounded-full border border-line px-2 py-0.5 text-[9px] font-bold tracking-wide text-ink-3">
+                      {t.battle.soon}
+                    </span>
+                  ) : (
+                    <ChevronRightIcon className="h-4 w-4 text-cyan/60" />
+                  )}
                 </p>
                 <p className="mt-1 text-xs leading-relaxed text-ink-2">
                   {desc}
                 </p>
               </div>
             </div>
-          </Link>
-        ))}
+          );
+          return soon ? (
+            <div
+              key={href}
+              className="cursor-not-allowed border border-line bg-surface/40 p-4"
+            >
+              {inner}
+            </div>
+          ) : (
+            <Link
+              key={href}
+              href={href}
+              className="border border-line bg-surface/80 p-4 hover:border-cyan/40"
+            >
+              {inner}
+            </Link>
+          );
+        })}
       </div>
 
       {/* テーマバンク */}

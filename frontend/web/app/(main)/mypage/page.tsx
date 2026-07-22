@@ -113,15 +113,26 @@ export default function MyPage() {
       {/* その他 */}
       <section className="mt-6 pb-4">
         <div className="divide-y divide-line border border-line bg-surface/80">
-          {t.mypage.menu.map((label) => (
-            <button
+          {/* アカウント設定・通知設定は準備中 */}
+          {t.mypage.menu.slice(0, 2).map((label) => (
+            <div
               key={label}
-              className="flex w-full items-center justify-between px-4 py-3 text-left text-sm text-ink-2 hover:bg-surface-2"
+              className="flex w-full items-center justify-between px-4 py-3 text-left text-sm text-ink-3"
             >
               {label}
-              <ChevronRightIcon className="h-4 w-4 text-ink-3" />
-            </button>
+              <span className="rounded-full border border-line px-2 py-0.5 text-[9px] font-bold text-ink-3">
+                {t.battle.soon}
+              </span>
+            </div>
           ))}
+          {/* ヘルプ・お問い合わせはメールで受付 */}
+          <a
+            href="mailto:lil.g62288@gmail.com"
+            className="flex w-full items-center justify-between px-4 py-3 text-left text-sm text-ink-2 hover:bg-surface-2"
+          >
+            {t.mypage.menu[2]}
+            <ChevronRightIcon className="h-4 w-4 text-ink-3" />
+          </a>
           {user ? (
             <button
               onClick={handleLogout}
