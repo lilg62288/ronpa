@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { ChevronRightIcon, CrownIcon } from "@/components/icons";
 import { useAuth } from "@/lib/auth";
 import { getBattles, summarize, type BattleRow } from "@/lib/battles";
+import { getProfile } from "@/lib/profile";
 import { LangToggle, useLang } from "@/lib/i18n";
 
 export default function MyPage() {
@@ -13,15 +14,18 @@ export default function MyPage() {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const [battles, setBattles] = useState<BattleRow[]>([]);
+  const [profileName, setProfileName] = useState("");
 
-  // ログイン中は自分の対戦履歴を取得
+  // ログイン中は自分の対戦履歴とプロフィールを取得
   useEffect(() => {
     if (!user) {
       setBattles([]);
+      setProfileName("");
       return;
     }
     let cancelled = false;
     getBattles().then((rows) => !cancelled && setBattles(rows));
+    getProfile().then((p) => !cancelled && p?.name && setProfileName(p.name));
     return () => {
       cancelled = true;
     };
@@ -34,8 +38,9 @@ export default function MyPage() {
     rate === null ? "—" : `${rate}%`,
   ];
 
-  // ログイン中はメールのユーザー名部分を表示、未ログインはデモ名
-  const displayName = user?.email ? user.email.split("@")[0] : "イッキ";
+  // プロフィール名 > メールのユーザー名 > デモ名
+  const displayName =
+    profileName || (user?.email ? user.email.split("@")[0] : "イッキ");
   const avatarChar = displayName[0]?.toUpperCase() ?? "イ";
 
   const handleLogout = async () => {
@@ -172,18 +177,21 @@ export default function MyPage() {
       {/* その他 */}
       <section className="mt-6 pb-4">
         <div className="divide-y divide-line border border-line bg-surface/80">
-          {/* アカウント設定・通知設定は準備中 */}
-          {t.mypage.menu.slice(0, 2).map((label) => (
-            <div
-              key={label}
-              className="flex w-full items-center justify-between px-4 py-3 text-left text-sm text-ink-3"
-            >
-              {label}
-              <span className="rounded-full border border-line px-2 py-0.5 text-[9px] font-bold text-ink-3">
-                {t.battle.soon}
-              </span>
-            </div>
-          ))}
+          {/* アカウント設定 → プロフィール設定 */}
+          <Link
+            href="/mypage/settings"
+            className="flex w-full items-center justify-between px-4 py-3 text-left text-sm text-ink-2 hover:bg-surface-2"
+          >
+            {t.mypage.menu[0]}
+            <ChevronRightIcon className="h-4 w-4 text-ink-3" />
+          </Link>
+          {/* 通知設定は準備中 */}
+          <div className="flex w-full items-center justify-between px-4 py-3 text-left text-sm text-ink-3">
+            {t.mypage.menu[1]}
+            <span className="rounded-full border border-line px-2 py-0.5 text-[9px] font-bold text-ink-3">
+              {t.battle.soon}
+            </span>
+          </div>
           {/* ヘルプ・お問い合わせはメールで受付 */}
           <a
             href="mailto:lil.g62288@gmail.com"
