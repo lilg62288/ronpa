@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { XIcon } from "@/components/icons";
+import { useAuth } from "@/lib/auth";
+import { saveBattle } from "@/lib/battles";
 import { currentLang, useLang } from "@/lib/i18n";
 import {
   RESULT_STORAGE_KEY,
@@ -69,6 +71,7 @@ export function AiRoomClient({
 }) {
   const router = useRouter();
   const { t } = useLang();
+  const { user } = useAuth();
   const [level, setLevel] = useState<DebateLevel | null>(
     isLevel(initialLevel) ? initialLevel : null,
   );
@@ -147,6 +150,8 @@ export function AiRoomClient({
     try {
       const result = await scoreDebate(session.debate_id);
       sessionStorage.setItem(RESULT_STORAGE_KEY, JSON.stringify(result));
+      // ログイン中なら対戦結果を保存（失敗しても遷移は止めない）
+      if (user) await saveBattle(user.id, result);
       router.push("/result");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error");

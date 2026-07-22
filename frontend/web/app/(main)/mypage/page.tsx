@@ -2,17 +2,37 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { ChevronRightIcon, CrownIcon } from "@/components/icons";
 import { useAuth } from "@/lib/auth";
+import { getBattles, summarize, type BattleRow } from "@/lib/battles";
 import { LangToggle, useLang } from "@/lib/i18n";
-
-// β版: 対戦記録はまだ保存されないため0で表示
-const statValues = ["0", "0", "—"];
 
 export default function MyPage() {
   const { t } = useLang();
   const router = useRouter();
   const { user, signOut } = useAuth();
+  const [battles, setBattles] = useState<BattleRow[]>([]);
+
+  // ログイン中は自分の対戦履歴を取得
+  useEffect(() => {
+    if (!user) {
+      setBattles([]);
+      return;
+    }
+    let cancelled = false;
+    getBattles().then((rows) => !cancelled && setBattles(rows));
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  const { total, wins, rate } = summarize(battles);
+  const statValues = [
+    String(total),
+    String(wins),
+    rate === null ? "—" : `${rate}%`,
+  ];
 
   // ログイン中はメールのユーザー名部分を表示、未ログインはデモ名
   const displayName = user?.email ? user.email.split("@")[0] : "イッキ";
@@ -96,18 +116,57 @@ export default function MyPage() {
             {t.mypage.historyEn}
           </span>
         </h2>
-        <div className="mt-3 flex flex-col items-center border border-dashed border-line bg-surface/40 px-4 py-8 text-center">
-          <p className="text-sm font-bold text-ink-2">{t.mypage.noHistory}</p>
-          <p className="mt-1 text-[11px] text-ink-3">
-            {t.mypage.noHistoryNote}
-          </p>
-          <Link
-            href="/room?mode=ai"
-            className="clip-corner mt-4 bg-cyan px-4 py-1.5 text-xs font-bold text-[#02131a] hover:bg-primary-hover"
-          >
-            {t.home.ctaBtn}
-          </Link>
-        </div>
+        {battles.length === 0 ? (
+          <div className="mt-3 flex flex-col items-center border border-dashed border-line bg-surface/40 px-4 py-8 text-center">
+            <p className="text-sm font-bold text-ink-2">{t.mypage.noHistory}</p>
+            <p className="mt-1 text-[11px] text-ink-3">
+              {t.mypage.noHistoryNote}
+            </p>
+            <Link
+              href="/room?mode=ai"
+              className="clip-corner mt-4 bg-cyan px-4 py-1.5 text-xs font-bold text-[#02131a] hover:bg-primary-hover"
+            >
+              {t.home.ctaBtn}
+            </Link>
+          </div>
+        ) : (
+          <div className="mt-3 divide-y divide-line border border-line bg-surface/80">
+            {battles.map((b) => {
+              const win = b.winner === "user";
+              const date = new Date(b.created_at).toLocaleDateString("ja-JP", {
+                month: "numeric",
+                day: "numeric",
+              });
+              return (
+                <div key={b.id} className="p-4">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`font-display rounded-full border px-2 py-0.5 text-[9px] font-bold ${
+                        win
+                          ? "border-green/40 bg-green-soft text-green"
+                          : "border-line bg-surface-2 text-ink-3"
+                      }`}
+                    >
+                      {win ? "WIN" : "LOSE"}
+                    </span>
+                    <span className="text-[10px] text-ink-3">
+                      {date} ・ {t.side[b.user_side]}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm font-bold leading-snug">
+                    {b.theme}
+                  </p>
+                  <p className="mt-2 text-xs text-ink-2">
+                    <span className="font-display font-bold text-ink">
+                      {b.total}
+                    </span>
+                    <span className="text-ink-3"> / 40</span>
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* その他 */}
