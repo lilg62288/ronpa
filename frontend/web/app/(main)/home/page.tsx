@@ -35,22 +35,15 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* オンライン状況 */}
-      <div className="mt-4 flex items-center justify-between border border-line bg-surface/80 px-4 py-3">
-        <div className="flex items-center gap-2">
-          <span className="relative flex h-2 w-2">
-            <span className="absolute h-full w-full animate-ping rounded-full bg-green opacity-50" />
-            <span className="h-2 w-2 rounded-full bg-green" />
-          </span>
-          <span className="text-sm font-bold">
-            <span className="font-display">1,284</span>
-            <span className="text-xs font-normal text-ink-2">
-              {t.home.online}
-            </span>
-          </span>
-        </div>
+      {/* オープンβ表示 */}
+      <div className="mt-4 flex items-center gap-2.5 border border-line bg-surface/80 px-4 py-3">
+        <span className="relative flex h-2 w-2 shrink-0">
+          <span className="absolute h-full w-full animate-ping rounded-full bg-green opacity-50" />
+          <span className="h-2 w-2 rounded-full bg-green" />
+        </span>
+        <span className="text-sm font-bold">{t.home.beta}</span>
         <span className="text-[10px] tracking-wider text-ink-3">
-          {t.home.today}
+          {t.home.betaNote}
         </span>
       </div>
 
@@ -71,60 +64,21 @@ export default function HomePage() {
         </Link>
       </div>
 
-      {/* 公開ルーム */}
+      {/* 公開ルーム（準備中） */}
       <section className="mt-6">
-        <div className="flex items-center justify-between">
-          <SectionTitle jp={t.home.rooms} en={t.home.roomsEn} />
+        <SectionTitle jp={t.home.rooms} en={t.home.roomsEn} />
+        <div className="mt-3 flex flex-col items-center border border-dashed border-line bg-surface/40 px-4 py-8 text-center">
+          <UsersIcon className="h-8 w-8 text-ink-3" />
+          <p className="mt-3 text-sm font-bold text-ink-2">
+            {t.home.roomsSoon}
+          </p>
+          <p className="mt-1 text-[11px] text-ink-3">{t.home.roomsSoonNote}</p>
           <Link
-            href="/battle"
-            className="text-[11px] font-bold text-cyan hover:text-primary-hover"
+            href="/room?mode=ai"
+            className="clip-corner mt-4 bg-cyan px-4 py-1.5 text-xs font-bold text-[#02131a] hover:bg-primary-hover"
           >
-            {t.home.seeAll}
+            {t.home.ctaBtn}
           </Link>
-        </div>
-        <div className="mt-3 divide-y divide-line border border-line bg-surface/80">
-          {t.data.rooms.map((room) => (
-            <div key={room.id} className="p-4">
-              <div className="flex items-center gap-2">
-                <span
-                  className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${room.cls}`}
-                >
-                  {room.category}
-                </span>
-                {room.live ? (
-                  <span className="flex items-center gap-1 rounded-full border border-accent/40 bg-accent-soft px-2 py-0.5 text-[10px] font-bold text-accent">
-                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
-                    {t.home.live}
-                  </span>
-                ) : (
-                  <span className="rounded-full border border-green/40 bg-green-soft px-2 py-0.5 text-[10px] font-bold text-green">
-                    {t.home.recruiting}
-                  </span>
-                )}
-              </div>
-              <p className="mt-2 text-sm font-bold leading-snug">
-                {room.theme}
-              </p>
-              <div className="mt-2.5 flex items-center justify-between">
-                <span className="flex items-center gap-1.5 text-xs text-ink-3">
-                  <UsersIcon className="h-4 w-4" />
-                  <span className="font-display text-[11px]">
-                    {room.members}/{room.capacity}
-                  </span>
-                </span>
-                <Link
-                  href="/room?mode=group"
-                  className={`clip-corner px-3.5 py-1 text-xs font-bold ${
-                    room.live
-                      ? "border border-line bg-surface-2 text-ink-2 hover:border-cyan/40"
-                      : "bg-cyan text-[#02131a] hover:bg-primary-hover"
-                  }`}
-                >
-                  {room.live ? t.home.watch : t.home.join}
-                </Link>
-              </div>
-            </div>
-          ))}
         </div>
       </section>
 

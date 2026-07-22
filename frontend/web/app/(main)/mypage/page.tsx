@@ -6,7 +6,8 @@ import { ChevronRightIcon, CrownIcon } from "@/components/icons";
 import { useAuth } from "@/lib/auth";
 import { LangToggle, useLang } from "@/lib/i18n";
 
-const statValues = ["24", "15", "62%"];
+// β版: 対戦記録はまだ保存されないため0で表示
+const statValues = ["0", "0", "—"];
 
 export default function MyPage() {
   const { t } = useLang();
@@ -41,10 +42,7 @@ export default function MyPage() {
               {t.auth.loggedInAs}: {user.email}
             </p>
           ) : (
-            <p className="mt-1 flex items-center gap-1.5 text-xs font-bold text-gold">
-              <CrownIcon className="h-4 w-4" />
-              {t.mypage.rank} <span className="font-display">1420</span>
-            </p>
+            <p className="mt-1 text-[11px] text-ink-3">{t.mypage.guestNote}</p>
           )}
         </div>
         <LangToggle />
@@ -98,46 +96,17 @@ export default function MyPage() {
             {t.mypage.historyEn}
           </span>
         </h2>
-        <p className="mt-0.5 text-[10px] text-ink-3">{t.mypage.historyNote}</p>
-        <div className="mt-3 divide-y divide-line border border-line bg-surface/80">
-          {t.data.history.map((match) => (
-            <Link
-              key={match.id}
-              href="/result"
-              className="block p-4 hover:bg-surface-2"
-            >
-              <div className="flex items-center gap-2">
-                <span
-                  className={`font-display rounded-full border px-2 py-0.5 text-[9px] font-bold ${
-                    match.win
-                      ? "border-green/40 bg-green-soft text-green"
-                      : "border-line bg-surface-2 text-ink-3"
-                  }`}
-                >
-                  {match.win ? "WIN" : "LOSE"}
-                </span>
-                <span className="text-[10px] text-ink-3">
-                  {match.date} ・ {t.side[match.side]}
-                </span>
-              </div>
-              <p className="mt-2 text-sm font-bold leading-snug">
-                {match.theme}
-              </p>
-              <div className="mt-2 flex items-center justify-between">
-                <span className="text-xs text-ink-2">
-                  {t.mypage.score}{" "}
-                  <span className="font-display font-bold text-ink">
-                    {match.score}
-                  </span>
-                  <span className="text-ink-3">/40</span>
-                </span>
-                <span className="flex items-center gap-0.5 text-[11px] font-bold text-cyan">
-                  {t.mypage.replay}
-                  <ChevronRightIcon className="h-3.5 w-3.5" />
-                </span>
-              </div>
-            </Link>
-          ))}
+        <div className="mt-3 flex flex-col items-center border border-dashed border-line bg-surface/40 px-4 py-8 text-center">
+          <p className="text-sm font-bold text-ink-2">{t.mypage.noHistory}</p>
+          <p className="mt-1 text-[11px] text-ink-3">
+            {t.mypage.noHistoryNote}
+          </p>
+          <Link
+            href="/room?mode=ai"
+            className="clip-corner mt-4 bg-cyan px-4 py-1.5 text-xs font-bold text-[#02131a] hover:bg-primary-hover"
+          >
+            {t.home.ctaBtn}
+          </Link>
         </div>
       </section>
 

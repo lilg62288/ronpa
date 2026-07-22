@@ -92,20 +92,16 @@ export default function BattlePage() {
           </span>
         </h2>
         <div className="mt-3 grid grid-cols-2 gap-3">
-          {t.data.themeBank.map(({ category, cls, count, sample }) => (
+          {t.data.themeBank.map(({ category, cls, sample }) => (
             <button
               key={category}
               className="border border-line bg-surface/80 p-3.5 text-left hover:border-cyan/40"
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-center">
                 <span
                   className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${cls}`}
                 >
                   {category}
-                </span>
-                <span className="font-display text-[10px] text-ink-3">
-                  {count}
-                  {t.battle.countSuffix}
                 </span>
               </div>
               <p className="mt-2 line-clamp-2 text-[11px] leading-snug text-ink-2">
