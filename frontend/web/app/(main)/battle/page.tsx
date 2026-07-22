@@ -31,13 +31,13 @@ export default function BattlePage() {
       soon: true,
     },
     {
-      href: "/room?mode=group",
+      href: "/versus",
       tag: t.battle.groupTag,
       title: t.battle.groupTitle,
       desc: t.battle.groupDesc,
       Icon: UsersIcon,
       iconClass: "border-blue/40 bg-blue-soft text-blue",
-      soon: true,
+      soon: false,
     },
   ];
 

@@ -76,3 +76,30 @@ def score(req: ScoreRequest):
         return debate.score_debate(req.debate_id)
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"AI採点に失敗しました: {e}")
+
+
+# ---------- 対人戦（人 vs 人）----------
+
+
+class VersusMessage(BaseModel):
+    side: str  # 肯定 | 否定
+    name: str = ""
+    text: str
+
+
+class VersusScoreRequest(BaseModel):
+    theme: str = Field(min_length=1, max_length=200)
+    language: str = "ja"
+    transcript: list[VersusMessage] = Field(default_factory=list)
+
+
+@app.post("/api/versus/score")
+def versus_score(req: VersusScoreRequest):
+    try:
+        return debate.score_versus(
+            req.theme,
+            [m.model_dump() for m in req.transcript],
+            req.language,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"AI採点に失敗しました: {e}")

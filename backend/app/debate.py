@@ -460,3 +460,114 @@ def score_debate(debate_id: str) -> dict:
         "winner": result.get("winner", "ai"),
         "turns": len(s["messages"]),
     }
+
+
+# ---------- 対人戦（人 vs 人）の採点 ----------
+
+_VERSUS_PROMPT = """あなたはプロのディベート審査員です。以下のテーマで行われた「肯定側」対「否定側」のディベートを審査してください。
+
+テーマ: {theme}
+
+対戦ログ:
+{log}
+
+両者を次の4軸でそれぞれ10点満点の整数で採点し、勝者を判定してください。
+- logic（論理性）, persuasion（説得力）, rebuttal（反論力）, structure（構成力）
+それぞれに良かった点・改善点を具体的かつ辛口にフィードバックし、総評も述べてください。
+
+必ず次のJSON形式のみで出力してください:
+{{"winner": "肯定" または "否定", "affirmative": {{"scores": {{"logic": 0, "persuasion": 0, "rebuttal": 0, "structure": 0}}, "good": "良かった点", "improve": "改善点"}}, "negative": {{"scores": {{"logic": 0, "persuasion": 0, "rebuttal": 0, "structure": 0}}, "good": "良かった点", "improve": "改善点"}}, "comment": "総評"}}"""
+
+_VERSUS_PROMPT_EN = """You are a professional debate judge. Judge the following Pro vs Con debate on this topic.
+
+Topic: {theme}
+
+Debate log:
+{log}
+
+Score both sides on four criteria (0-10 integers each): logic, persuasion, rebuttal, structure. Then decide the winner.
+Give concrete, brutally honest strengths and improvements for each side, plus an overall comment. Write all feedback in English.
+
+Respond ONLY in this JSON format:
+{{"winner": "肯定" or "否定", "affirmative": {{"scores": {{"logic": 0, "persuasion": 0, "rebuttal": 0, "structure": 0}}, "good": "strengths", "improve": "to improve"}}, "negative": {{"scores": {{"logic": 0, "persuasion": 0, "rebuttal": 0, "structure": 0}}, "good": "strengths", "improve": "to improve"}}, "comment": "overall"}}"""
+
+
+def _mock_versus(en: bool) -> dict:
+    side = lambda g, i: {  # noqa: E731
+        "scores": {"logic": 7, "persuasion": 7, "rebuttal": 7, "structure": 7},
+        "good": g,
+        "improve": i,
+    }
+    if en:
+        return {
+            "winner": "肯定",
+            "affirmative": side(
+                "(Demo) Clear structure and well-grounded claims.",
+                "(Demo) Push harder on rebuttals to seal the win.",
+            ),
+            "negative": side(
+                "(Demo) Sharp counterpoints that pressured the opponent.",
+                "(Demo) Back your claims with more concrete evidence.",
+            ),
+            "comment": "(Demo) A close, high-quality debate. Both sides argued well.",
+        }
+    return {
+        "winner": "肯定",
+        "affirmative": side(
+            "（デモ採点）構成が明確で、根拠を伴う主張ができていた。",
+            "（デモ採点）反駁をもう一歩踏み込めれば勝ちを確実にできる。",
+        ),
+        "negative": side(
+            "（デモ採点）相手を追い込む鋭い切り返しがあった。",
+            "（デモ採点）主張の裏付けとなる具体的な根拠を増やしたい。",
+        ),
+        "comment": "（デモ採点）僅差の好勝負。両者とも論を尽くしていた。",
+    }
+
+
+def score_versus(theme: str, transcript: list, language: str = "ja") -> dict:
+    en = language == "en"
+    if MOCK_MODE:
+        result = _mock_versus(en)
+    else:
+        log = "\n".join(
+            f"[{m.get('side', '')}・{m.get('name', '')}] {m.get('text', '')}"
+            for m in transcript
+        ) or ("(no statements)" if en else "（発言なし）")
+        prompt = (_VERSUS_PROMPT_EN if en else _VERSUS_PROMPT).format(
+            theme=theme, log=log
+        )
+        try:
+            completion = _client.chat.completions.create(
+                model=MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=900,
+                temperature=0.3,
+                response_format={"type": "json_object"},
+            )
+            result = json.loads(completion.choices[0].message.content or "{}")
+        except Exception as e:
+            print(f"[versus] OpenAI unavailable, using demo score: {e}")
+            result = _mock_versus(en)
+
+    def _clean(side: dict) -> dict:
+        sc = side.get("scores", {})
+        clamped = {
+            k: max(0, min(10, int(sc.get(k, 0))))
+            for k in ("logic", "persuasion", "rebuttal", "structure")
+        }
+        return {
+            "scores": clamped,
+            "total": sum(clamped.values()),
+            "good": side.get("good", ""),
+            "improve": side.get("improve", ""),
+        }
+
+    return {
+        "theme": theme,
+        "language": language,
+        "winner": result.get("winner", "肯定"),
+        "affirmative": _clean(result.get("affirmative", {})),
+        "negative": _clean(result.get("negative", {})),
+        "comment": result.get("comment", ""),
+    }
