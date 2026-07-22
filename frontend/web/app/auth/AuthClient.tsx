@@ -33,17 +33,24 @@ export function AuthClient({ initialMode }: { initialMode: "login" | "signup" })
     }
     setBusy(true);
     try {
-      const { error } = isSignup
-        ? await signUp(email, password)
-        : await signIn(email, password);
-      if (error) {
-        setError(error);
-        return;
-      }
       if (isSignup) {
-        // Supabaseはデフォルトでメール確認あり。セッションが即時付く場合は/homeへ
-        setEmailSent(true);
+        const { error, autoLogin } = await signUp(email, password);
+        if (error) {
+          setError(error);
+          return;
+        }
+        // メール確認OFFなら即ログイン→ホームへ。ONなら確認メール案内を表示
+        if (autoLogin) {
+          router.push("/home");
+        } else {
+          setEmailSent(true);
+        }
       } else {
+        const { error } = await signIn(email, password);
+        if (error) {
+          setError(error);
+          return;
+        }
         router.push("/home");
       }
     } finally {

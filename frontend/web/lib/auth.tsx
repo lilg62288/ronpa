@@ -12,12 +12,14 @@ import type { User } from "@supabase/supabase-js";
 import { isSupabaseConfigured, supabase } from "./supabase";
 
 type AuthResult = { error: string | null };
+// autoLogin: メール確認OFF時は登録と同時にセッションが作られる（即ログイン）
+type SignUpResult = { error: string | null; autoLogin: boolean };
 
 type AuthContextValue = {
   user: User | null;
   loading: boolean;
   configured: boolean;
-  signUp: (email: string, password: string) => Promise<AuthResult>;
+  signUp: (email: string, password: string) => Promise<SignUpResult>;
   signIn: (email: string, password: string) => Promise<AuthResult>;
   signOut: () => Promise<void>;
 };
@@ -26,7 +28,7 @@ const AuthContext = createContext<AuthContextValue>({
   user: null,
   loading: true,
   configured: false,
-  signUp: async () => ({ error: "未設定" }),
+  signUp: async () => ({ error: "未設定", autoLogin: false }),
   signIn: async () => ({ error: "未設定" }),
   signOut: async () => {},
 });
@@ -52,10 +54,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string): Promise<AuthResult> => {
-    if (!supabase) return { error: "認証が設定されていません" };
-    const { error } = await supabase.auth.signUp({ email, password });
-    return { error: error?.message ?? null };
+  const signUp = async (
+    email: string,
+    password: string,
+  ): Promise<SignUpResult> => {
+    if (!supabase) return { error: "認証が設定されていません", autoLogin: false };
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    // セッションが返れば（メール確認OFF）即ログイン状態
+    return { error: error?.message ?? null, autoLogin: !!data.session };
   };
 
   const signIn = async (email: string, password: string): Promise<AuthResult> => {
