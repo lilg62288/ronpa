@@ -15,17 +15,23 @@ export default function MyPage() {
   const { user, signOut } = useAuth();
   const [battles, setBattles] = useState<BattleRow[]>([]);
   const [profileName, setProfileName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
 
   // ログイン中は自分の対戦履歴とプロフィールを取得
   useEffect(() => {
     if (!user) {
       setBattles([]);
       setProfileName("");
+      setAvatarUrl("");
       return;
     }
     let cancelled = false;
     getBattles().then((rows) => !cancelled && setBattles(rows));
-    getProfile().then((p) => !cancelled && p?.name && setProfileName(p.name));
+    getProfile().then((p) => {
+      if (cancelled || !p) return;
+      if (p.name) setProfileName(p.name);
+      if (p.avatarUrl) setAvatarUrl(p.avatarUrl);
+    });
     return () => {
       cancelled = true;
     };
@@ -40,7 +46,7 @@ export default function MyPage() {
 
   // プロフィール名 > メールのユーザー名 > デモ名
   const displayName =
-    profileName || (user?.email ? user.email.split("@")[0] : "イッキ");
+    profileName || (user?.email ? user.email.split("@")[0] : "ゲスト");
   const avatarChar = displayName[0]?.toUpperCase() ?? "イ";
 
   const handleLogout = async () => {
@@ -52,9 +58,18 @@ export default function MyPage() {
     <main className="px-4 pt-6">
       {/* プロフィール */}
       <header className="flex items-center gap-4">
-        <span className="clip-corner flex h-14 w-14 items-center justify-center border border-cyan/40 bg-cyan-soft text-xl font-bold text-cyan">
-          {avatarChar}
-        </span>
+        {avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={avatarUrl}
+            alt=""
+            className="clip-corner h-14 w-14 shrink-0 border border-cyan/40 object-cover"
+          />
+        ) : (
+          <span className="clip-corner flex h-14 w-14 shrink-0 items-center justify-center border border-cyan/40 bg-cyan-soft text-xl font-bold text-cyan">
+            {avatarChar}
+          </span>
+        )}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h1 className="truncate text-lg font-bold">{displayName}</h1>

@@ -1,11 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { XIcon } from "@/components/icons";
 import { useAuth } from "@/lib/auth";
 import { LangToggle, useLang } from "@/lib/i18n";
-import { emptyProfile, getProfile, saveProfile, type Profile } from "@/lib/profile";
+import {
+  emptyProfile,
+  getProfile,
+  saveProfile,
+  uploadAvatar,
+  type Profile,
+} from "@/lib/profile";
 
 export default function ProfileSettingsPage() {
   const { t } = useLang();
@@ -14,6 +20,8 @@ export default function ProfileSettingsPage() {
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -33,6 +41,21 @@ export default function ProfileSettingsPage() {
     setBusy(false);
     if (err) setError(t.profile.saveFail);
     else setSaved(true);
+  };
+
+  // 画像を選んだら即アップロードしてプレビューに反映
+  const pickAvatar = async (file?: File) => {
+    if (!file || !user || uploading) return;
+    setUploading(true);
+    setError("");
+    setSaved(false);
+    const { url, error: err } = await uploadAvatar(user.id, file);
+    setUploading(false);
+    if (err || !url) {
+      setError(err ?? t.profile.saveFail);
+      return;
+    }
+    setP((prev) => ({ ...prev, avatarUrl: url }));
   };
 
   const genderKeys = ["male", "female", "other", "na"] as const;
@@ -83,6 +106,59 @@ export default function ProfileSettingsPage() {
       <p className="mt-1 text-xs text-ink-3">{t.profile.sub}</p>
 
       <div className="mt-5 flex flex-col gap-4">
+        {/* アイコン画像 */}
+        <div>
+          <span className="text-xs font-bold text-ink-2">
+            {t.profile.avatar}
+          </span>
+          <div className="mt-2 flex items-center gap-4">
+            {p.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={p.avatarUrl}
+                alt=""
+                className="clip-corner h-20 w-20 border border-cyan/40 object-cover"
+              />
+            ) : (
+              <span className="clip-corner flex h-20 w-20 items-center justify-center border border-cyan/40 bg-cyan-soft text-2xl font-bold text-cyan">
+                {(p.name[0] ?? "?").toUpperCase()}
+              </span>
+            )}
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+                className="clip-corner border border-cyan/40 bg-cyan-soft px-4 py-2 text-xs font-bold text-cyan hover:border-cyan disabled:opacity-50"
+              >
+                {uploading
+                  ? t.profile.avatarUploading
+                  : p.avatarUrl
+                    ? t.profile.avatarChange
+                    : t.profile.avatarPick}
+              </button>
+              {p.avatarUrl && !uploading && (
+                <button
+                  onClick={() => {
+                    setP((prev) => ({ ...prev, avatarUrl: "" }));
+                    setSaved(false);
+                  }}
+                  className="text-[11px] font-bold text-ink-3 hover:text-accent"
+                >
+                  {t.profile.avatarRemove}
+                </button>
+              )}
+            </div>
+          </div>
+          <p className="mt-2 text-[10px] text-ink-3">{t.profile.avatarNote}</p>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => pickAvatar(e.target.files?.[0])}
+          />
+        </div>
+
         <label className="block">
           <span className="text-xs font-bold text-ink-2">{t.profile.name}</span>
           <input
